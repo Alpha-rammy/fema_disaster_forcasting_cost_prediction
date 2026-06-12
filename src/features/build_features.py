@@ -22,7 +22,7 @@ def load_clean_data():
         os.path.join(DATA_PROCESSED, "disaster_summaries_clean.csv")
     )
 
-    print("Clean data loaded")
+    print("Clean data loaded successfully")
     print("Declarations:", declarations.shape)
     print("Public Assistance:", pa.shape)
     print("Disaster Summaries:", summaries.shape)
@@ -30,7 +30,7 @@ def load_clean_data():
     return declarations, pa, summaries
 
 
-def create_base_features(declarations):
+def convert_declaration_dates(declarations):
     declarations = declarations.copy()
 
     date_cols = [
@@ -50,6 +50,10 @@ def create_base_features(declarations):
         declarations["declarationdate"].dt.year
     )
 
+    return declarations
+
+
+def create_base_features(declarations):
     base = declarations[
         [
             "disasternumber",
@@ -67,6 +71,17 @@ def create_base_features(declarations):
     base = base.drop_duplicates(subset=["disasternumber"])
 
     return base
+
+
+def get_season(month):
+    if month in [12, 1, 2]:
+        return "Winter"
+    elif month in [3, 4, 5]:
+        return "Spring"
+    elif month in [6, 7, 8]:
+        return "Summer"
+    else:
+        return "Autumn"
 
 
 def create_temporal_features(base):
@@ -87,22 +102,12 @@ def create_temporal_features(base):
     base["declaration_month"] = base["declarationdate"].dt.month
     base["declaration_quarter"] = base["declarationdate"].dt.quarter
 
-    def get_season(month):
-        if month in [12, 1, 2]:
-            return "Winter"
-        elif month in [3, 4, 5]:
-            return "Spring"
-        elif month in [6, 7, 8]:
-            return "Summer"
-        else:
-            return "Autumn"
-
     base["declaration_season"] = base["declaration_month"].apply(get_season)
 
     return base
 
 
-def create_pa_features(pa):
+def create_pa_aggregation_features(pa):
     pa_features = (
         pa.groupby("disasternumber")
         .agg(
@@ -121,17 +126,23 @@ def create_pa_features(pa):
 
     pa_features = pa_features.fillna(0)
 
-    high_project_threshold = pa["projectamount"].quantile(0.75)
-    low_project_threshold = pa["projectamount"].quantile(0.25)
+    return pa_features
+
+
+def create_project_size_features(pa, pa_features):
+    pa_features = pa_features.copy()
+
+    large_threshold = pa["projectamount"].quantile(0.75)
+    small_threshold = pa["projectamount"].quantile(0.25)
 
     large_counts = (
-        pa[pa["projectamount"] >= high_project_threshold]
+        pa[pa["projectamount"] >= large_threshold]
         .groupby("disasternumber")
         .size()
     )
 
     small_counts = (
-        pa[pa["projectamount"] <= low_project_threshold]
+        pa[pa["projectamount"] <= small_threshold]
         .groupby("disasternumber")
         .size()
     )
@@ -178,7 +189,7 @@ def create_ratio_features(pa_features):
 
 
 def create_target_features(pa):
-    target_features = (
+    summary_features = (
         pa.groupby("disasternumber")
         .agg(
             totalobligated=("totalobligated", "sum")
@@ -186,11 +197,11 @@ def create_target_features(pa):
         .reset_index()
     )
 
-    target_features["log_totalobligated"] = np.log1p(
-        target_features["totalobligated"]
+    summary_features["log_totalobligated"] = np.log1p(
+        summary_features["totalobligated"]
     )
 
-    return target_features
+    return summary_features
 
 
 def create_dsf_features(pa_features):
@@ -251,89 +262,66 @@ def merge_features(base, pa_features, dsf_features, target_features):
     features_fema = features_fema.fillna(0)
 
     print(
-        f"Feature matrix: {features_fema.shape[0]:,} disasters "
-        f"x {features_fema.shape[1]} columns"
+        f"Feature matrix: {features_fema.shape[0]:,} disasters x "
+        f"{features_fema.shape[1]} columns"
     )
+
     print(f"Null count: {features_fema.isnull().sum().sum()}")
 
     return features_fema
 
 
-def encode_categorical_features(features_fema):
-    features_fema = features_fema.copy()
-
-    cat_cols = [
-        "state",
-        "declarationtype",
-        "incidenttype",
-        "declaration_season"
-    ]
-
-    cat_cols = [col for col in cat_cols if col in features_fema.columns]
-
-    features_fema_encoded = pd.get_dummies(
-        features_fema,
-        columns=cat_cols,
-        drop_first=True
-    )
-
-    return features_fema_encoded
-
-
-def drop_unused_columns(features_fema_encoded):
-    drop_cols = [
-        "declarationdate",
-        "incidentbegindate",
-        "incidentenddate",
-        "paloaddate",
-        "ialoaddate"
-    ]
-
-    features_fema_encoded = features_fema_encoded.drop(
-        columns=drop_cols,
+def drop_unused_columns(features_fema):
+    features_fema = features_fema.drop(
+        columns=[
+            "declarationdate",
+            "incidentbegindate",
+            "incidentenddate",
+            "paloaddate",
+            "ialoaddate"
+        ],
         errors="ignore"
     )
 
-    return features_fema_encoded
+    return features_fema
 
 
-def save_features(features_fema_encoded):
+def save_features(features_fema):
     output_path = os.path.join(DATA_PROCESSED, "features_fema.csv")
 
-    features_fema_encoded.to_csv(output_path, index=False)
+    features_fema.to_csv(output_path, index=False)
 
-    print(
-        f"Saved features_fema.csv "
-        f"({features_fema_encoded.shape[0]:,} rows x "
-        f"{features_fema_encoded.shape[1]} cols)"
-    )
-
-    print(f"Path: {os.path.abspath(output_path)}")
+    print("Saved unencoded features to:", output_path)
+    print("Shape:", features_fema.shape)
+    print("Categorical columns:")
+    print(features_fema.select_dtypes(include=["object"]).columns.tolist())
 
 
 def main():
     declarations, pa, summaries = load_clean_data()
 
+    declarations = convert_declaration_dates(declarations)
+
     base = create_base_features(declarations)
     base = create_temporal_features(base)
 
-    pa_features = create_pa_features(pa)
+    pa_features = create_pa_aggregation_features(pa)
+    pa_features = create_project_size_features(pa, pa_features)
     pa_features = create_ratio_features(pa_features)
 
     target_features = create_target_features(pa)
     dsf_features = create_dsf_features(pa_features)
 
     features_fema = merge_features(
-        base,
-        pa_features,
-        dsf_features,
-        target_features
+        base=base,
+        pa_features=pa_features,
+        dsf_features=dsf_features,
+        target_features=target_features
     )
 
-    features_fema_encoded = encode_categorical_features(features_fema)
-    features_fema_encoded = drop_unused_columns(features_fema_encoded)
+    features_fema = drop_unused_columns(features_fema)
 
-    save_features(features_fema_encoded)
+    save_features(features_fema)
 
 
 if __name__ == "__main__":

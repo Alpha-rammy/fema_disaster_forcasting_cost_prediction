@@ -23,11 +23,13 @@ MODEL_DIR = os.path.join("models")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 
-def load_features():
+def load_data():
     df = pd.read_csv(os.path.join(DATA_PROCESSED, "features_fema.csv"))
 
     print("Feature data loaded")
-    print("Shape:", df.shape)
+    print(df.shape)
+    print("Categorical columns:")
+    print(df.select_dtypes(include=["object"]).columns.tolist())
 
     return df
 
@@ -36,55 +38,65 @@ def prepare_target(df):
     df = df.dropna(subset=["totalobligated"]).copy()
     df["log_totalobligated"] = np.log1p(df["totalobligated"])
 
+    print(f"Disasters: {len(df):,}")
+    print(df["log_totalobligated"].describe())
+
     return df
 
 
-def get_feature_columns(df):
+def select_features(df):
     exclude = [
+        # Target
         "totalobligated",
         "log_totalobligated",
+
+        # Identifier
         "disasternumber",
 
+        # Direct obligation leakage
         "pa_obligated_total",
         "pa_obligated_mean",
         "pa_obligated_max",
 
+        # Federal share leakage
         "federalShareObligated",
         "federalShareObligated_total",
         "avg_federalShareObligated",
 
+        # Derived from obligations
         "avg_obligation_per_project",
         "funding_intensity",
 
+        # Project amount leakage
         "pa_project_amount_total",
         "pa_project_amount_mean",
         "pa_project_amount_median",
         "pa_project_amount_max",
         "pa_project_amount_std",
 
+        # Disaster summary dollar amounts
         "totalAmountIhpApproved",
         "totalAmountHaApproved",
         "totalAmountOnaApproved",
-
         "log_totalAmountIhpApproved",
         "log_totalAmountHaApproved",
         "log_totalAmountOnaApproved",
-
         "totalObligatedAmountPa",
         "totalObligatedAmountCatAb",
         "totalObligatedAmountCatC2g",
         "totalObligatedAmountHmg",
-
         "log_totalObligatedAmountPa",
         "log_totalObligatedAmountCatAb",
         "log_totalObligatedAmountCatC2g",
         "log_totalObligatedAmountHmg",
 
+        # DSF leakage
         "dsf_combined_score",
         "dsf_funding_score",
         "dsf_scale_score",
         "dsf_project_amount_score",
 
+        # Strong financial proxy features
         "large_project_ratio",
         "small_project_ratio",
         "pa_project_count",
@@ -95,16 +107,18 @@ def get_feature_columns(df):
     feature_cols = [c for c in df.columns if c not in exclude]
 
     print("Features selected:", len(feature_cols))
-    print("Remaining obligated columns:", [c for c in feature_cols if "oblig" in c.lower()])
-    print("Remaining amount columns:", [c for c in feature_cols if "amount" in c.lower()])
+    print("Remaining obligated columns:")
+    print([c for c in feature_cols if "oblig" in c.lower()])
+    print("Remaining amount columns:")
+    print([c for c in feature_cols if "amount" in c.lower()])
 
-    return feature_cols
-
-
-def split_data(df, feature_cols):
     X = df[feature_cols]
     y = df["log_totalobligated"]
 
+    return X, y, feature_cols
+
+
+def split_data(X, y):
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -120,7 +134,7 @@ def split_data(df, feature_cols):
 
 def build_preprocessor(X_train):
     numeric_features = X_train.select_dtypes(
-        include=["int64", "float64", "bool"]
+        include=["int64", "float64"]
     ).columns.tolist()
 
     categorical_features = X_train.select_dtypes(
@@ -202,7 +216,9 @@ def train_and_evaluate(models, preprocessor, X_train, X_test, y_train, y_test):
         preds_original = np.expm1(preds_log)
 
         mae_original = mean_absolute_error(y_test_original, preds_original)
-        rmse_original = np.sqrt(mean_squared_error(y_test_original, preds_original))
+        rmse_original = np.sqrt(
+            mean_squared_error(y_test_original, preds_original)
+        )
 
         results[name] = {
             "MAE_log": mae_log,
@@ -238,22 +254,22 @@ def save_best_model(results_df, trained_models):
 
     joblib.dump(best_model, model_path)
 
-    print("\nModel comparison:")
+    print("\nModel Comparison:")
     print(results_df)
 
     print(f"\nBest model saved: {best_name}")
     print("Saved to:", model_path)
 
-    return best_model
+    return best_model, best_name
 
 
 def main():
-    df = load_features()
+    df = load_data()
     df = prepare_target(df)
 
-    feature_cols = get_feature_columns(df)
+    X, y, feature_cols = select_features(df)
 
-    X_train, X_test, y_train, y_test = split_data(df, feature_cols)
+    X_train, X_test, y_train, y_test = split_data(X, y)
 
     preprocessor = build_preprocessor(X_train)
 
