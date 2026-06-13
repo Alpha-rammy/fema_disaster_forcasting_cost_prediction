@@ -45,7 +45,6 @@ The Challenge
 Federal agencies often struggle to estimate disaster recovery costs during the early stages of emergency response.
 
 
-=======
 
 🏗️ Feature Engineering
 
@@ -126,8 +125,6 @@ assets/
 
 🏗️ System Architecture
 
-=======
----
 
 ## The Solution
 
@@ -139,7 +136,6 @@ A machine learning system capable of:
 * Providing real-time cost estimates
 * Enabling proactive disaster planning
 
----
 
 # ✨ Key Features
 
@@ -174,12 +170,11 @@ A machine learning system capable of:
 
 Custom Disaster Severity Framework (DSF) score developed to quantify disaster impact and scale.
 
----
+
 
 # 🏗️ System Architecture
 
-```text
->>>>>>> fa1a260 (Ccomplete FEMA disaster cost prediction project)
+(Complete FEMA disaster cost prediction project)
 Raw FEMA Data
         │
         ▼
@@ -202,23 +197,10 @@ FastAPI Deployment
         │
         ▼
 Streamlit Dashboard
-<<<<<<< HEAD
 
 
-TerraNova_project/
-│
-├── data/
-│   ├── raw/
-│   │   ├── declarations.csv
-│   │   ├── public_assistance.csv
-│   │   └── disaster_summaries.csv
-│   │
-│   └── processed/
-│       └── features_fema.csv
-=======
-```
 
----
+
 
 # 🤖 Model Performance
 
@@ -288,7 +270,7 @@ Example Response
 
 # 📁 Project Structure
 
-```text
+
 TerraNova_project/
 │
 ├── assets/
@@ -302,7 +284,7 @@ TerraNova_project/
 │
 ├── models/
 │   └── fema_cost_model.pkl
->>>>>>> fa1a260 (Ccomplete FEMA disaster cost prediction project)
+  (Complete FEMA disaster cost prediction project)
 │
 ├── Notebooks/
 │   ├── 01_eda.ipynb
@@ -314,7 +296,7 @@ TerraNova_project/
 │   ├── ingestion/
 │   ├── preprocessing/
 │   ├── features/
-<<<<<<< HEAD
+
 │   │   ├── build_features.py
 │   │   └── dsf.py
 │   │
@@ -352,20 +334,8 @@ Technologies Used
 - FastAPI
 - Joblib
 - VS Code
-=======
-│   ├── models/
-│   ├── api/
-│   └── config.py
-│
-├── streamlit_app/
-│   └── app.py
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
 
----
+
 
 # 🛠️ Technology Stack
 
@@ -380,7 +350,6 @@ Technologies Used
 | Development Environment | VS Code               |
 | Version Control         | Git, GitHub           |
 
----
 
 # 🚀 Quick Start
 
@@ -435,4 +404,4 @@ Ransom Chukwu
 
 
 Data Science | Machine Learning | 
->>>>>>> fa1a260 (Ccomplete FEMA disaster cost prediction project)
+ (Complete FEMA disaster cost prediction project)
