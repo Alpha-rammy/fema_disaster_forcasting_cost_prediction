@@ -109,7 +109,7 @@ Features
 
 ### Endpoint
 
-```http
+
 POST /predict
 
 {
@@ -296,7 +296,6 @@ TerraNova_project/
 │   ├── ingestion/
 │   ├── preprocessing/
 │   ├── features/
-
 │   │   ├── build_features.py
 │   │   └── dsf.py
 │   │
