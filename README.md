@@ -266,25 +266,21 @@ Example Response
 }
 ```
 
----
+## 📁 Project Structure
 
-# 📁 Project Structure
-
-
+```text
 TerraNova_project/
 │
 ├── assets/
 │   ├── streamlit_dashboard.png
 │   ├── prediction_example.png
-│   └── swagger_api.png
+│   ├── swagger_api.png
+│   ├── actual_vs_predicted.png
+│   └── model_comparison.png
 │
 ├── data/
 │   ├── raw/
 │   └── processed/
-│
-├── models/
-│   └── fema_cost_model.pkl
-  (Complete FEMA disaster cost prediction project)
 │
 ├── Notebooks/
 │   ├── 01_eda.ipynb
@@ -314,15 +310,10 @@ TerraNova_project/
 ├── streamlit_app/
 │   └── app.py
 │
-├── assets/
-│   ├── swagger_api.png
-│   ├── prediction_example.png
-│   ├── actual_vs_predicted.png
-│   └── model_comparison.png
-│
 ├── requirements.txt
 ├── .gitignore
 └── README.md
+```
 
 
 Technologies Used
