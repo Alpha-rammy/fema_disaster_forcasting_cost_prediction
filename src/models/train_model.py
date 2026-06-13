@@ -4,6 +4,7 @@ import joblib
 import pandas as pd
 import numpy as np
 
+
 warnings.filterwarnings("ignore")
 
 from sklearn.model_selection import train_test_split
@@ -13,7 +14,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
+import mlflow
+import mlflow.sklearn
 from xgboost import XGBRegressor
 
 
@@ -21,6 +23,13 @@ DATA_PROCESSED = os.path.join("data", "processed")
 MODEL_DIR = os.path.join("models")
 
 os.makedirs(MODEL_DIR, exist_ok=True)
+
+
+MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
+EXPERIMENT_NAME = "TerraNova FEMA Cost Prediction"
+
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_experiment(EXPERIMENT_NAME)
 
 
 def load_data():
@@ -191,51 +200,151 @@ def define_models():
     return models
 
 
-def train_and_evaluate(models, preprocessor, X_train, X_test, y_train, y_test):
+def train_and_evaluate(
+    models,
+    preprocessor,
+    X_train,
+    X_test,
+    y_train,
+    y_test
+):
+
     results = {}
     trained_models = {}
 
+    num_features = len(
+        X_train.select_dtypes(
+            include=["int64", "float64"]
+        ).columns
+    )
+
+    cat_features = len(
+        X_train.select_dtypes(
+            include=["object"]
+        ).columns
+    )
+
     for name, model in models.items():
 
-        pipeline = Pipeline(
-            steps=[
-                ("preprocessor", preprocessor),
-                ("model", model)
-            ]
-        )
+        with mlflow.start_run(run_name=name):
 
-        pipeline.fit(X_train, y_train)
+            pipeline = Pipeline(
+                steps=[
+                    ("preprocessor", preprocessor),
+                    ("model", model)
+                ]
+            )
 
-        preds_log = pipeline.predict(X_test)
+            pipeline.fit(X_train, y_train)
 
-        mae_log = mean_absolute_error(y_test, preds_log)
-        rmse_log = np.sqrt(mean_squared_error(y_test, preds_log))
-        r2 = r2_score(y_test, preds_log)
+            preds_log = pipeline.predict(X_test)
 
-        y_test_original = np.expm1(y_test)
-        preds_original = np.expm1(preds_log)
+            mae_log = mean_absolute_error(
+                y_test,
+                preds_log
+            )
 
-        mae_original = mean_absolute_error(y_test_original, preds_original)
-        rmse_original = np.sqrt(
-            mean_squared_error(y_test_original, preds_original)
-        )
+            rmse_log = np.sqrt(
+                mean_squared_error(
+                    y_test,
+                    preds_log
+                )
+            )
 
-        results[name] = {
-            "MAE_log": mae_log,
-            "RMSE_log": rmse_log,
-            "R2": r2,
-            "MAE_original": mae_original,
-            "RMSE_original": rmse_original
-        }
+            r2 = r2_score(
+                y_test,
+                preds_log
+            )
 
-        trained_models[name] = pipeline
+            y_test_original = np.expm1(y_test)
+            preds_original = np.expm1(preds_log)
 
-        print(
-            f"{name:25s} | "
-            f"RMSE log: {rmse_log:.4f} | "
-            f"R2: {r2:.4f} | "
-            f"MAE original: {mae_original:,.2f}"
-        )
+            mae_original = mean_absolute_error(
+                y_test_original,
+                preds_original
+            )
+
+            rmse_original = np.sqrt(
+                mean_squared_error(
+                    y_test_original,
+                    preds_original
+                )
+            )
+
+            # ======================
+            # MLFLOW METRICS
+            # ======================
+
+            mlflow.log_metric(
+                "MAE_log",
+                mae_log
+            )
+
+            mlflow.log_metric(
+                "RMSE_log",
+                rmse_log
+            )
+
+            mlflow.log_metric(
+                "R2",
+                r2
+            )
+
+            mlflow.log_metric(
+                "MAE_original",
+                mae_original
+            )
+
+            mlflow.log_metric(
+                "RMSE_original",
+                rmse_original
+            )
+
+            # ======================
+            # MLFLOW PARAMS
+            # ======================
+
+            mlflow.log_param(
+                "model_name",
+                name
+            )
+
+            mlflow.log_param(
+                "target",
+                "log_totalobligated"
+            )
+
+            mlflow.log_param(
+                "num_features",
+                num_features
+            )
+
+            mlflow.log_param(
+                "cat_features",
+                cat_features
+            )
+
+            mlflow.sklearn.log_model(
+                pipeline,
+                name="model"
+            )
+
+            results[name] = {
+                "MAE_log": mae_log,
+                "RMSE_log": rmse_log,
+                "R2": r2,
+                "MAE_original": mae_original,
+                "RMSE_original": rmse_original
+            }
+
+            trained_models[name] = pipeline
+
+            print(
+                f"{name:25s} | "
+                f"RMSE log: {rmse_log:.4f} | "
+                f"R2: {r2:.4f} | "
+                f"MAE original: {mae_original:,.2f}"
+            )
 
     results_df = (
         pd.DataFrame(results)
@@ -243,8 +352,7 @@ def train_and_evaluate(models, preprocessor, X_train, X_test, y_train, y_test):
         .sort_values("RMSE_log")
     )
 
-    return results_df, trained_models
-
+    return results_df, trained_models 
 
 def save_best_model(results_df, trained_models):
     best_name = results_df.index[0]

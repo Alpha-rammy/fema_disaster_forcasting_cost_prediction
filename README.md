@@ -20,7 +20,6 @@ This project demonstrates production-grade data science practices including:
 ✅ Interactive Dashboard using Streamlit
 
 ✅ Automated Model Tracking with MLflow
-
 ✅ Production-Ready Project Structure
 
 
@@ -46,35 +45,7 @@ The Challenge
 Federal agencies often struggle to estimate disaster recovery costs during the early stages of emergency response.
 
 
-Challenges include:
-
-📉 Uncertain disaster funding requirements
-
-💰 Inefficient resource allocation
-
-⚠️ Delayed recovery planning
-
-📊 Limited forecasting capability
-
-🌀 Increasing disaster frequency and severity
-
-The Solution
-
-A machine learning system capable of:
-
-- Predicting disaster recovery costs
-- Identifying high-cost disaster events
-- Supporting resource allocation decisions
-- Providing real-time cost estimates
-- Enabling proactive disaster planning
-
-✨ Key Features
-
-🌪️ Disaster Cost Forecasting
-- Linear Regression Baseline
-- Random Forest Regressor
-- XGBoost Regressor
-- Log-transformed target modeling
+=======
 
 🏗️ Feature Engineering
 
@@ -155,6 +126,60 @@ assets/
 
 🏗️ System Architecture
 
+=======
+---
+
+## The Solution
+
+A machine learning system capable of:
+
+* Predicting disaster recovery costs
+* Identifying high-cost disaster events
+* Supporting resource allocation decisions
+* Providing real-time cost estimates
+* Enabling proactive disaster planning
+
+---
+
+# ✨ Key Features
+
+## 🌪️ Disaster Cost Forecasting
+
+* Linear Regression Baseline
+* Random Forest Regressor
+* XGBoost Regressor
+* Log-transformed target modeling
+
+### Temporal Features
+
+* Disaster Duration
+* Declaration Delay
+* Declaration Month
+* Declaration Quarter
+* Declaration Season
+
+### Funding Features
+
+* Federal Share Metrics
+* Public Assistance Aggregations
+* Project Size Indicators
+
+### Disaster Severity Features
+
+* Registration Statistics
+* Assistance Indicators
+* Disaster Scale Metrics
+
+### DSF Score
+
+Custom Disaster Severity Framework (DSF) score developed to quantify disaster impact and scale.
+
+---
+
+# 🏗️ System Architecture
+
+```text
+>>>>>>> fa1a260 (Ccomplete FEMA disaster cost prediction project)
 Raw FEMA Data
         │
         ▼
@@ -177,6 +202,7 @@ FastAPI Deployment
         │
         ▼
 Streamlit Dashboard
+<<<<<<< HEAD
 
 
 TerraNova_project/
@@ -189,6 +215,94 @@ TerraNova_project/
 │   │
 │   └── processed/
 │       └── features_fema.csv
+=======
+```
+
+---
+
+# 🤖 Model Performance
+
+| Model             | RMSE (Log Scale) | R² Score   | MAE (Original Scale) |
+| ----------------- | ---------------- | ---------- | -------------------- |
+| Linear Regression | 5.3925           | 0.5008     | $26.17 Billion       |
+| Random Forest     | 3.0367           | 0.8417     | $61.90 Million       |
+| XGBoost           | **2.9988**       | **0.8456** | $65.63 Million       |
+
+## Best Model
+
+🏆 XGBoost Regressor
+
+* RMSE (Log): 2.9988
+* R² Score: 0.8456
+* Target Variable: log_totalobligated
+* Deployment: FastAPI + Streamlit
+
+Approximately 50% of disasters received no FEMA funding, resulting in a highly skewed target distribution. Log transformation significantly improved model stability and predictive performance.
+
+---
+
+# 📸 Application Screenshots
+
+### Streamlit Dashboard
+
+![Streamlit Dashboard](assets/streamlit_dashboard.png)
+
+### Prediction Example
+
+![Prediction Example](assets/prediction_example.png)
+
+### FastAPI Swagger Documentation
+
+![Swagger API](assets/swagger_api.png)
+
+---
+
+# 🚀 API Endpoint
+
+### POST /predict
+
+Example Request
+
+```json
+{
+  "fydeclared": 2024,
+  "state": "FL",
+  "declarationtype": "DR",
+  "incidenttype": "Hurricane",
+  "designatedarea": "Statewide",
+  "disaster_duration_days": 120,
+  "declaration_delay_days": 30
+}
+```
+
+Example Response
+
+```json
+{
+  "predicted_log_cost": 18.0219,
+  "predicted_recovery_cost": 67110464
+}
+```
+
+---
+
+# 📁 Project Structure
+
+```text
+TerraNova_project/
+│
+├── assets/
+│   ├── streamlit_dashboard.png
+│   ├── prediction_example.png
+│   └── swagger_api.png
+│
+├── data/
+│   ├── raw/
+│   └── processed/
+│
+├── models/
+│   └── fema_cost_model.pkl
+>>>>>>> fa1a260 (Ccomplete FEMA disaster cost prediction project)
 │
 ├── Notebooks/
 │   ├── 01_eda.ipynb
@@ -200,6 +314,7 @@ TerraNova_project/
 │   ├── ingestion/
 │   ├── preprocessing/
 │   ├── features/
+<<<<<<< HEAD
 │   │   ├── build_features.py
 │   │   └── dsf.py
 │   │
@@ -237,3 +352,87 @@ Technologies Used
 - FastAPI
 - Joblib
 - VS Code
+=======
+│   ├── models/
+│   ├── api/
+│   └── config.py
+│
+├── streamlit_app/
+│   └── app.py
+│
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
+
+---
+
+# 🛠️ Technology Stack
+
+| Category                | Technologies          |
+| ----------------------- | --------------------- |
+| Machine Learning        | Scikit-Learn, XGBoost |
+| Data Processing         | Pandas, NumPy         |
+| Visualization           | Matplotlib, Seaborn   |
+| API Development         | FastAPI               |
+| Dashboard               | Streamlit             |
+| Model Serialization     | Joblib                |
+| Development Environment | VS Code               |
+| Version Control         | Git, GitHub           |
+
+---
+
+# 🚀 Quick Start
+
+### Clone Repository
+
+```bash
+git clone https://github.com/yourusername/TerraNova_project.git
+cd TerraNova_project
+```
+
+### Create Virtual Environment
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Install Requirements
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run FastAPI
+
+```bash
+uvicorn src.api.main:app --reload
+```
+
+### Run Streamlit
+
+```bash
+streamlit run streamlit_app/app.py
+```
+
+---
+
+# 📌 Key Findings
+
+* XGBoost achieved the strongest predictive performance.
+* Disaster duration and declaration timing were important predictors.
+* Funding distributions were highly skewed.
+* Approximately 50% of disasters received no FEMA funding.
+* Log transformation significantly improved model stability.
+* The final model explained approximately 84.6% of the variation in disaster recovery costs.
+
+---
+
+# 👨‍💻 Author
+
+Ransom Chukwu
+
+
+Data Science | Machine Learning | 
+>>>>>>> fa1a260 (Ccomplete FEMA disaster cost prediction project)
