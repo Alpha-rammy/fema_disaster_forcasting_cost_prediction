@@ -22,9 +22,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from xgboost import XGBRegressor
 
 
-# =========================
+
 # STEP 1 - PATHS
-# =========================
+
 
 DATA_PROCESSED = os.path.join("data", "processed")
 MODEL_DIR = os.path.join("models")
@@ -32,9 +32,9 @@ MODEL_DIR = os.path.join("models")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 
-# =========================
+
 # STEP 2 - LOAD DATA
-# =========================
+
 
 def load_data():
     df = pd.read_csv(
@@ -50,9 +50,9 @@ def load_data():
     return df
 
 
-# =========================
+
 # STEP 3 - PREPARE TARGET
-# =========================
+
 
 def prepare_target(df):
     df = df.dropna(subset=["totalobligated"]).copy()
@@ -67,9 +67,8 @@ def prepare_target(df):
     return df
 
 
-# =========================
+
 # STEP 4 - SELECT FEATURES
-# =========================
 
 def select_features(df):
     # These are the final no-leakage features used for modelling.
@@ -114,9 +113,9 @@ def select_features(df):
     return X, y, feature_cols
 
 
-# =========================
+
 # STEP 5 - TRAIN/TEST SPLIT
-# =========================
+
 
 def split_data(X, y):
     X_train, X_test, y_train, y_test = train_test_split(
@@ -132,9 +131,9 @@ def split_data(X, y):
     return X_train, X_test, y_train, y_test
 
 
-# =========================
+
 # STEP 6 - PREPROCESSING PIPELINE
-# =========================
+
 
 def build_preprocessor(X_train):
     numeric_features = X_train.select_dtypes(
@@ -171,9 +170,9 @@ def build_preprocessor(X_train):
     return preprocessor
 
 
-# =========================
+
 # STEP 7 - DEFINE MODELS
-# =========================
+
 
 def define_models():
     lr = LinearRegression()
@@ -203,9 +202,9 @@ def define_models():
     return models
 
 
-# =========================
+
 # STEP 8 - TRAIN AND EVALUATE
-# =========================
+
 
 def train_and_evaluate(
     models,
@@ -289,9 +288,8 @@ def train_and_evaluate(
     return results_df, trained_models
 
 
-# =========================
+
 # STEP 9 - FEATURE IMPORTANCE
-# =========================
 
 def show_feature_importance(trained_models):
     rf_pipeline = trained_models["Random Forest"]
@@ -318,9 +316,9 @@ def show_feature_importance(trained_models):
     return feature_importance
 
 
-# =========================
+
 # STEP 10 - SAVE BEST MODEL
-# =========================
+
 
 def save_best_model(results_df, trained_models):
     best_name = results_df.index[0]
@@ -345,9 +343,9 @@ def save_best_model(results_df, trained_models):
     return best_model, best_name
 
 
-# =========================
+
 # STEP 11 - MAIN SCRIPT
-# =========================
+
 
 def main():
     df = load_data()
