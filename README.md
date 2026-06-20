@@ -18,8 +18,6 @@ The project supports evidence-based disaster planning by helping emergency manag
 
 ✅ Interactive Streamlit Dashboard
 
-✅ Automated Experiment Tracking using MLflow
-
 ✅ Production-Ready Project Structure
 
 ---
@@ -126,9 +124,6 @@ Model Training
 Model Evaluation
         │
         ▼
-MLflow Experiment Tracking
-        │
-        ▼
 FastAPI Deployment
         │
         ▼
@@ -177,20 +172,6 @@ Several important observations emerged during modeling:
 * Log transformation significantly improved model stability.
 * Temporal disaster characteristics were strong predictors of recovery cost.
 * Ensemble tree-based models substantially outperformed linear regression.
-
----
-
-## 🔍 Experiment Tracking
-
-MLflow was used to:
-
-* Track model experiments
-* Compare model performance
-* Log hyperparameters
-* Store evaluation metrics
-* Manage model artifacts
-
-This ensured reproducible model development and transparent model selection.
 
 ---
 
@@ -310,7 +291,6 @@ TerraNova_project/
 | Machine Learning        | Scikit-Learn, XGBoost |
 | Data Processing         | Pandas, NumPy         |
 | Visualization           | Matplotlib, Seaborn   |
-| Experiment Tracking     | MLflow                |
 | API Development         | FastAPI               |
 | Dashboard               | Streamlit             |
 | Model Serialization     | Joblib                |
@@ -351,12 +331,6 @@ uvicorn src.api.main:app --reload
 
 ```bash
 streamlit run streamlit_app/app.py
-```
-
-### Launch MLflow
-
-```bash
-mlflow ui
 ```
 
 ---
