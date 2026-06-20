@@ -1,134 +1,59 @@
-🌪️ TerraNova FEMA Disaster Cost Prediction
+# 🌪️ TerraNova FEMA Disaster Cost Prediction
 
-
-🎯 Overview
-
+## 🎯 Overview
 
 TerraNova is an end-to-end machine learning system designed to forecast FEMA disaster recovery costs using historical disaster declarations, public assistance funding records, and disaster impact indicators.
 
+The project demonstrates a complete machine learning workflow from data acquisition and feature engineering to model deployment through FastAPI and Streamlit.
 
-This project demonstrates production-grade data science practices including:
+### Key Highlights
 
 ✅ Disaster Cost Forecasting using Machine Learning
 
-✅ Feature Engineering (Temporal, Funding, Severity Features)
+✅ Advanced Feature Engineering (Temporal, Funding & Severity Features)
 
 ✅ Model Comparison (Linear Regression, Random Forest, XGBoost)
 
-✅ Real-time Scoring API built with FastAPI
+✅ Real-Time Prediction API using FastAPI
 
-✅ Interactive Dashboard using Streamlit
+✅ Interactive Streamlit Dashboard
 
-✅ Automated Model Tracking with MLflow
 ✅ Production-Ready Project Structure
 
+---
 
 ## 📊 Project Scope
 
-| Metric | Value |
-|---------|---------|
-| Industry | Emergency Management |
-| Domain | Disaster Recovery |
-| Data Source | FEMA Open Data |
-| Records | 69,000+ Disaster Events |
-| Geographic Coverage | United States |
-| Time Period | Multiple Fiscal Years |
-| Deployment | FastAPI + Streamlit |
-| Best Model | XGBoost |
+| Metric              | Value                   |
+| ------------------- | ----------------------- |
+| Industry            | Emergency Management    |
+| Domain              | Disaster Recovery       |
+| Data Source         | FEMA Open Data          |
+| Records             | 69,000+ Disaster Events |
+| Geographic Coverage | United States           |
+| Time Period         | Multiple Fiscal Years   |
+| Deployment          | FastAPI + Streamlit     |
+| Best Model          | XGBoost (R² = 0.8456)   |
 
-🏢 Business Context
+---
 
+## 🏢 Business Context
 
-The Challenge
-
+### The Challenge
 
 Federal agencies often struggle to estimate disaster recovery costs during the early stages of emergency response.
 
+Key challenges include:
 
+* Uncertain disaster funding requirements
+* Inefficient resource allocation
+* Delayed recovery planning
+* Limited forecasting capability
+* Increasing disaster frequency and severity
 
-🏗️ Feature Engineering
+### The Solution
 
-Temporal Features
-
-- Disaster Duration
-- Declaration Delay
-- Declaration Month
-- Declaration Quarter
-- Declaration Season
-
-Funding Features
-
-- Federal Share Metrics
-- Project Size Indicators
-- Public Assistance Aggregations
-
-Disaster Severity Features
-
-- Registration Counts
-- Assistance Indicators
-- Disaster Scale Features
-
-DSF Score
-- Custom Disaster Severity Framework (DSF) Score developed to quantify disaster impact.
-
-🤖 Model Development
-
-Models Evaluated
-
-M## 🤖 Model Performance
-
-| Model | RMSE (Log Scale) | R² Score | MAE (Original Scale) |
-|---------|---------|---------|---------|
-| Linear Regression | 5.3925 | 0.5008 | $26.17 Billion |
-| Random Forest | 3.0367 | 0.8417 | $61.90 Million |
-| XGBoost | 2.9988 | 0.8456 | $65.63 Million |
-
-
-Best Model
-
-🏆 XGBoost Regressor
-
-Key findings:
-
-- XGBoost produced the lowest prediction error.
-- Approximately 50% of disasters received no FEMA funding.
-- Cost distributions were highly right-skewed.
-- Log transformation improved model stability and predictive performance.
-
-📡 FastAPI Deployment
-
-Features
- 
-- Real-time prediction endpoint
-- Swagger UI documentation
-- JSON request/response interface
-- Production-ready API structure
-
-
-## 📡 FastAPI Deployment
-
-### Endpoint
-
-
-POST /predict
-
-{
-  "predicted_log_cost": 17.6118,
-  "predicted_recovery_cost": 44536528
-}
-
-assets/
-├── swagger_api.png
-├── prediction_example.png
-├── actual_vs_predicted.png
-└── model_comparison.png
-
-🏗️ System Architecture
-
-
-## The Solution
-
-A machine learning system capable of:
+TerraNova provides a machine learning solution capable of:
 
 * Predicting disaster recovery costs
 * Identifying high-cost disaster events
@@ -136,15 +61,9 @@ A machine learning system capable of:
 * Providing real-time cost estimates
 * Enabling proactive disaster planning
 
+---
 
-# ✨ Key Features
-
-## 🌪️ Disaster Cost Forecasting
-
-* Linear Regression Baseline
-* Random Forest Regressor
-* XGBoost Regressor
-* Log-transformed target modeling
+## 🏗️ Feature Engineering
 
 ### Temporal Features
 
@@ -157,24 +76,24 @@ A machine learning system capable of:
 ### Funding Features
 
 * Federal Share Metrics
-* Public Assistance Aggregations
 * Project Size Indicators
+* Public Assistance Aggregations
 
 ### Disaster Severity Features
 
-* Registration Statistics
+* Registration Counts
 * Assistance Indicators
 * Disaster Scale Metrics
 
 ### DSF Score
 
-Custom Disaster Severity Framework (DSF) score developed to quantify disaster impact and scale.
+A custom Disaster Severity Framework (DSF) score was developed to quantify disaster impact and severity.
 
+---
 
+## 🏗️ System Architecture
 
-# 🏗️ System Architecture
-
-(Complete FEMA disaster cost prediction project)
+```text
 Raw FEMA Data
         │
         ▼
@@ -197,12 +116,11 @@ FastAPI Deployment
         │
         ▼
 Streamlit Dashboard
+```
 
+---
 
-
-
-
-# 🤖 Model Performance
+## 🤖 Model Performance
 
 | Model             | RMSE (Log Scale) | R² Score   | MAE (Original Scale) |
 | ----------------- | ---------------- | ---------- | -------------------- |
@@ -210,20 +128,24 @@ Streamlit Dashboard
 | Random Forest     | 3.0367           | 0.8417     | $61.90 Million       |
 | XGBoost           | **2.9988**       | **0.8456** | $65.63 Million       |
 
-## Best Model
+### 🏆 Best Model: XGBoost Regressor
 
-🏆 XGBoost Regressor
+#### Key Findings
 
-* RMSE (Log): 2.9988
-* R² Score: 0.8456
-* Target Variable: log_totalobligated
-* Deployment: FastAPI + Streamlit
+* Lowest RMSE on the transformed target
+* Highest R² score (0.8456)
+* Explained approximately 84.6% of the variation in disaster recovery costs
+* Selected as the final production model
 
-Approximately 50% of disasters received no FEMA funding, resulting in a highly skewed target distribution. Log transformation significantly improved model stability and predictive performance.
+#### Modeling Insights
+
+* Approximately 50% of disasters received no FEMA funding
+* Disaster funding distributions were highly right-skewed
+* Log transformation significantly improved model stability and predictive performance
 
 ---
 
-# 📸 Application Screenshots
+## 📸 Application Screenshots
 
 ### Streamlit Dashboard
 
@@ -239,11 +161,11 @@ Approximately 50% of disasters received no FEMA funding, resulting in a highly s
 
 ---
 
-# 🚀 API Endpoint
+## 🚀 API Endpoint
 
 ### POST /predict
 
-Example Request
+#### Example Request
 
 ```json
 {
@@ -257,7 +179,7 @@ Example Request
 }
 ```
 
-Example Response
+#### Example Response
 
 ```json
 {
@@ -265,6 +187,8 @@ Example Response
   "predicted_recovery_cost": 67110464
 }
 ```
+
+---
 
 ## 📁 Project Structure
 
@@ -274,13 +198,19 @@ TerraNova_project/
 ├── assets/
 │   ├── streamlit_dashboard.png
 │   ├── prediction_example.png
-│   ├── swagger_api.png
-│   ├── actual_vs_predicted.png
-│   └── model_comparison.png
+│   └── swagger_api.png
 │
 ├── data/
 │   ├── raw/
+│   │   ├── declarations.csv
+│   │   ├── public_assistance.csv
+│   │   └── disaster_summaries.csv
+│   │
 │   └── processed/
+│       └── features_fema.csv
+│
+├── models/
+│   └── fema_cost_model.pkl
 │
 ├── Notebooks/
 │   ├── 01_eda.ipynb
@@ -304,9 +234,6 @@ TerraNova_project/
 │   │
 │   └── config.py
 │
-├── models/
-│   └── fema_cost_model.pkl
-│
 ├── streamlit_app/
 │   └── app.py
 │
@@ -315,19 +242,9 @@ TerraNova_project/
 └── README.md
 ```
 
+---
 
-Technologies Used
-- Python
-- Pandas
-- Scikit-Learn
-- XGBoost
-- FastAPI
-- Joblib
-- VS Code
-
-
-
-# 🛠️ Technology Stack
+## 🛠️ Technology Stack
 
 | Category                | Technologies          |
 | ----------------------- | --------------------- |
@@ -340,13 +257,14 @@ Technologies Used
 | Development Environment | VS Code               |
 | Version Control         | Git, GitHub           |
 
+---
 
-# 🚀 Quick Start
+## 🚀 Quick Start
 
 ### Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/TerraNova_project.git
+git clone https://github.com/Alpha-rammy/TerraNova_project.git
 cd TerraNova_project
 ```
 
@@ -377,7 +295,7 @@ streamlit run streamlit_app/app.py
 
 ---
 
-# 📌 Key Findings
+## 📌 Key Findings
 
 * XGBoost achieved the strongest predictive performance.
 * Disaster duration and declaration timing were important predictors.
@@ -388,10 +306,8 @@ streamlit run streamlit_app/app.py
 
 ---
 
-# 👨‍💻 Author
+## 👨‍💻 Author
 
-Ransom Chukwu
+**Ransom Chukwu**
 
-
-Data Science | Machine Learning | 
- (Complete FEMA disaster cost prediction project)
+Data Science | Machine Learning | Health Informatics
