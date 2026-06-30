@@ -635,25 +635,22 @@ These findings suggest that disaster timing and declaration characteristics prov
 
 ---
 
-# 📸 Application Screenshots
+## 📸 Application Screenshots
 
-## Streamlit Dashboard
+### Streamlit Dashboard
 
-```markdown
 ![Streamlit Dashboard](assets/streamlit_dashboard.png)
-```
 
-## Prediction Example
 
-```markdown
+### Prediction Example
+
 ![Prediction Example](assets/prediction_example.png)
-```
 
-## FastAPI Swagger Documentation
 
-```markdown
+### FastAPI Swagger Documentation
+
 ![Swagger API](assets/swagger_api.png)
-```
+
 
 ---
 
