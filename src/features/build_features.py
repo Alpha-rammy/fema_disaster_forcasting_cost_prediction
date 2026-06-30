@@ -6,71 +6,148 @@ import numpy as np
 warnings.filterwarnings("ignore")
 
 
+
+# PATHS
+
+
 DATA_PROCESSED = os.path.join("data", "processed")
+
+FEATURE_FILE = os.path.join(DATA_PROCESSED, "features_fema.csv")
+
+
+
+# LOAD CLEAN DATA
 
 
 def load_clean_data():
     declarations = pd.read_csv(
-        os.path.join(DATA_PROCESSED, "declarations_clean.csv")
-    )
-
-    pa = pd.read_csv(
-        os.path.join(DATA_PROCESSED, "public_assistance_clean.csv")
-    )
-
-    summaries = pd.read_csv(
-        os.path.join(DATA_PROCESSED, "disaster_summaries_clean.csv")
-    )
-
-    print("Clean data loaded successfully")
-    print("Declarations:", declarations.shape)
-    print("Public Assistance:", pa.shape)
-    print("Disaster Summaries:", summaries.shape)
-
-    return declarations, pa, summaries
-
-
-def convert_declaration_dates(declarations):
-    declarations = declarations.copy()
-
-    date_cols = [
-        "declarationdate",
-        "incidentbegindate",
-        "incidentenddate"
-    ]
-
-    for col in date_cols:
-        if col in declarations.columns:
-            declarations[col] = pd.to_datetime(
-                declarations[col],
-                errors="coerce"
-            )
-
-    declarations["fydeclared"] = declarations["fydeclared"].fillna(
-        declarations["declarationdate"].dt.year
-    )
-
-    return declarations
-
-
-def create_base_features(declarations):
-    base = declarations[
-        [
-            "disasternumber",
-            "state",
-            "declarationtype",
-            "incidenttype",
-            "fydeclared",
-            "designatedarea",
+        os.path.join(DATA_PROCESSED, "declarations_clean.csv"),
+        parse_dates=[
             "declarationdate",
             "incidentbegindate",
             "incidentenddate"
         ]
-    ].copy()
+    )
 
-    base = base.drop_duplicates(subset=["disasternumber"])
+    public_assistance = pd.read_csv(
+        os.path.join(DATA_PROCESSED, "public_assistance_clean.csv")
+    )
 
-    return base
+    print("Clean datasets loaded successfully.")
+    print("Declarations:", declarations.shape)
+    print("Public Assistance:", public_assistance.shape)
+
+    return declarations, public_assistance
+
+
+
+# DECLARATION FEATURE ENGINEERING
+
+
+def engineer_declaration_features(declarations):
+    declarations = declarations.copy()
+
+    # Duration of disaster
+    declarations["disaster_duration_days"] = (
+        declarations["incidentenddate"] -
+        declarations["incidentbegindate"]
+    ).dt.days
+
+    # Delay between incident start and declaration
+    declarations["declaration_delay_days"] = (
+        declarations["declarationdate"] -
+        declarations["incidentbegindate"]
+    ).dt.days
+
+    # Clean negative and missing values
+    declarations["disaster_duration_days"] = (
+        declarations["disaster_duration_days"]
+        .clip(lower=0)
+        .fillna(0)
+    )
+
+    declarations["declaration_delay_days"] = (
+        declarations["declaration_delay_days"]
+        .clip(lower=0)
+        .fillna(0)
+    )
+
+    # Date-derived features
+    declarations["declaration_year"] = declarations["declarationdate"].dt.year
+    declarations["declaration_month"] = declarations["declarationdate"].dt.month
+    declarations["declaration_quarter"] = declarations["declarationdate"].dt.quarter
+
+    declarations["declaration_season"] = (
+        declarations["declaration_month"]
+        .apply(get_season)
+    )
+
+    # Count-based engineered features
+    declarations["fy_declaration_count"] = (
+        declarations
+        .groupby("fydeclared")["disasternumber"]
+        .transform("count")
+    )
+
+    declarations["state_declaration_count"] = (
+        declarations
+        .groupby("state")["disasternumber"]
+        .transform("count")
+    )
+
+    declarations["incident_frequency"] = (
+        declarations
+        .groupby("incidenttype")["disasternumber"]
+        .transform("count")
+    )
+
+    declarations["state_incident_count"] = (
+        declarations
+        .groupby(["state", "incidenttype"])["disasternumber"]
+        .transform("count")
+    )
+
+    declarations["state_year_count"] = (
+        declarations
+        .groupby(["state", "fydeclared"])["disasternumber"]
+        .transform("count")
+    )
+
+    # Disaster-level aggregate features
+    agg_features = (
+        declarations
+        .groupby("disasternumber")
+        .agg(
+            avg_duration_days=("disaster_duration_days", "mean"),
+            avg_delay_days=("declaration_delay_days", "mean")
+        )
+        .round(2)
+        .reset_index()
+    )
+
+    # Drop raw date columns
+    declarations = declarations.drop(
+        columns=[
+            "declarationdate",
+            "incidentbegindate",
+            "incidentenddate"
+        ]
+    )
+
+    declaration_features = declarations.merge(
+        agg_features,
+        on="disasternumber",
+        how="left"
+    )
+
+    declaration_features = declaration_features.drop_duplicates(
+        subset=["disasternumber"]
+    )
+
+    print("Declaration features created.")
+    print(declaration_features.shape)
+
+    return declaration_features
 
 
 def get_season(month):
@@ -84,244 +161,94 @@ def get_season(month):
         return "Autumn"
 
 
-def create_temporal_features(base):
-    base = base.copy()
 
-    base["disaster_duration_days"] = (
-        base["incidentenddate"] - base["incidentbegindate"]
-    ).dt.days
-
-    base["declaration_delay_days"] = (
-        base["declarationdate"] - base["incidentbegindate"]
-    ).dt.days
-
-    base["disaster_duration_days"] = base["disaster_duration_days"].clip(lower=0)
-    base["declaration_delay_days"] = base["declaration_delay_days"].clip(lower=0)
-
-    base["declaration_year"] = base["declarationdate"].dt.year
-    base["declaration_month"] = base["declarationdate"].dt.month
-    base["declaration_quarter"] = base["declarationdate"].dt.quarter
-
-    base["declaration_season"] = base["declaration_month"].apply(get_season)
-
-    return base
+# TARGET CREATION FROM PUBLIC ASSISTANCE
 
 
-def create_pa_aggregation_features(pa):
-    pa_features = (
-        pa.groupby("disasternumber")
-        .agg(
-            pa_project_count=("projectamount", "count"),
-            pa_project_amount_total=("projectamount", "sum"),
-            pa_project_amount_mean=("projectamount", "mean"),
-            pa_project_amount_median=("projectamount", "median"),
-            pa_project_amount_max=("projectamount", "max"),
-            pa_project_amount_std=("projectamount", "std"),
-            pa_obligated_total=("federalshareobligated", "sum"),
-            pa_obligated_mean=("federalshareobligated", "mean"),
-            pa_obligated_max=("federalshareobligated", "max"),
-        )
-        .reset_index()
-    )
-
-    pa_features = pa_features.fillna(0)
-
-    return pa_features
-
-
-def create_project_size_features(pa, pa_features):
-    pa_features = pa_features.copy()
-
-    large_threshold = pa["projectamount"].quantile(0.75)
-    small_threshold = pa["projectamount"].quantile(0.25)
-
-    large_counts = (
-        pa[pa["projectamount"] >= large_threshold]
-        .groupby("disasternumber")
-        .size()
-    )
-
-    small_counts = (
-        pa[pa["projectamount"] <= small_threshold]
-        .groupby("disasternumber")
-        .size()
-    )
-
-    pa_features["large_project_count"] = (
-        pa_features["disasternumber"]
-        .map(large_counts)
-        .fillna(0)
-    )
-
-    pa_features["small_project_count"] = (
-        pa_features["disasternumber"]
-        .map(small_counts)
-        .fillna(0)
-    )
-
-    return pa_features
-
-
-def create_ratio_features(pa_features):
-    pa_features = pa_features.copy()
-
-    pa_features["avg_obligation_per_project"] = (
-        pa_features["pa_obligated_total"] /
-        (pa_features["pa_project_count"] + 1)
-    )
-
-    pa_features["funding_intensity"] = (
-        pa_features["pa_obligated_total"] /
-        (pa_features["pa_project_amount_total"] + 1)
-    )
-
-    pa_features["large_project_ratio"] = (
-        pa_features["large_project_count"] /
-        (pa_features["pa_project_count"] + 1)
-    )
-
-    pa_features["small_project_ratio"] = (
-        pa_features["small_project_count"] /
-        (pa_features["pa_project_count"] + 1)
-    )
-
-    return pa_features
-
-
-def create_target_features(pa):
-    summary_features = (
-        pa.groupby("disasternumber")
+def create_target(public_assistance):
+    pa_target = (
+        public_assistance
+        .groupby("disasternumber", as_index=False)
         .agg(
             totalobligated=("totalobligated", "sum")
         )
-        .reset_index()
     )
 
-    summary_features["log_totalobligated"] = np.log1p(
-        summary_features["totalobligated"]
+    pa_target["log_totalobligated"] = np.log1p(
+        pa_target["totalobligated"]
     )
 
-    return summary_features
+    pa_target = pa_target.drop_duplicates(
+        subset=["disasternumber"]
+    )
+
+    print("Target created from Public Assistance.")
+    print(pa_target.shape)
+
+    return pa_target
 
 
-def create_dsf_features(pa_features):
-    dsf = pa_features[
-        [
-            "disasternumber",
-            "pa_project_count",
-            "pa_project_amount_total",
-            "pa_obligated_total"
-        ]
-    ].copy()
+# =====================================================
+# MERGE FINAL FEATURE MATRIX
+# =====================================================
 
-    dsf["dsf_scale_score"] = pd.qcut(
-        dsf["pa_project_count"].rank(method="first"),
-        q=5,
-        labels=[1, 2, 3, 4, 5]
-    ).astype(int)
-
-    dsf["dsf_project_amount_score"] = pd.qcut(
-        dsf["pa_project_amount_total"].rank(method="first"),
-        q=5,
-        labels=[1, 2, 3, 4, 5]
-    ).astype(int)
-
-    dsf["dsf_funding_score"] = pd.qcut(
-        dsf["pa_obligated_total"].rank(method="first"),
-        q=5,
-        labels=[1, 2, 3, 4, 5]
-    ).astype(int)
-
-    dsf["dsf_combined_score"] = (
-        dsf["dsf_scale_score"] +
-        dsf["dsf_project_amount_score"] +
-        dsf["dsf_funding_score"]
-    ) / 3
-
-    dsf["dsf_combined_score"] = dsf["dsf_combined_score"].round()
-
-    return dsf[
-        [
-            "disasternumber",
-            "dsf_scale_score",
-            "dsf_project_amount_score",
-            "dsf_funding_score",
-            "dsf_combined_score"
-        ]
-    ]
-
-
-def merge_features(base, pa_features, dsf_features, target_features):
+def build_feature_matrix(declaration_features, pa_target):
     features_fema = (
-        base
-        .merge(pa_features, on="disasternumber", how="left")
-        .merge(dsf_features, on="disasternumber", how="left")
-        .merge(target_features, on="disasternumber", how="left")
+        declaration_features
+        .merge(
+            pa_target,
+            on="disasternumber",
+            how="left"
+        )
     )
 
     features_fema = features_fema.fillna(0)
 
-    print(
-        f"Feature matrix: {features_fema.shape[0]:,} disasters x "
-        f"{features_fema.shape[1]} columns"
-    )
-
-    print(f"Null count: {features_fema.isnull().sum().sum()}")
+    print("Final feature matrix created.")
+    print(features_fema.shape)
 
     return features_fema
 
 
-def drop_unused_columns(features_fema):
-    features_fema = features_fema.drop(
-        columns=[
-            "declarationdate",
-            "incidentbegindate",
-            "incidentenddate",
-            "paloaddate",
-            "ialoaddate"
-        ],
-        errors="ignore"
-    )
 
-    return features_fema
+# SAVE FEATURES
 
 
 def save_features(features_fema):
-    output_path = os.path.join(DATA_PROCESSED, "features_fema.csv")
+    os.makedirs(DATA_PROCESSED, exist_ok=True)
 
-    features_fema.to_csv(output_path, index=False)
+    features_fema.to_csv(
+        FEATURE_FILE,
+        index=False
+    )
 
-    print("Saved unencoded features to:", output_path)
-    print("Shape:", features_fema.shape)
-    print("Categorical columns:")
-    print(features_fema.select_dtypes(include=["object"]).columns.tolist())
+    print("Feature matrix saved successfully.")
+    print("Saved to:", FEATURE_FILE)
+
+
+
+# MAIN
 
 
 def main():
-    declarations, pa, summaries = load_clean_data()
+    declarations, public_assistance = load_clean_data()
 
-    declarations = convert_declaration_dates(declarations)
-
-    base = create_base_features(declarations)
-    base = create_temporal_features(base)
-
-    pa_features = create_pa_aggregation_features(pa)
-    pa_features = create_project_size_features(pa, pa_features)
-    pa_features = create_ratio_features(pa_features)
-
-    target_features = create_target_features(pa)
-    dsf_features = create_dsf_features(pa_features)
-
-    features_fema = merge_features(
-        base=base,
-        pa_features=pa_features,
-        dsf_features=dsf_features,
-        target_features=target_features
+    declaration_features = engineer_declaration_features(
+        declarations
     )
 
-    features_fema = drop_unused_columns(features_fema)
+    pa_target = create_target(
+        public_assistance
+    )
+
+    features_fema = build_feature_matrix(
+        declaration_features,
+        pa_target
+    )
 
     save_features(features_fema)
+
+    print("Feature engineering completed successfully.")
 
 
 if __name__ == "__main__":
