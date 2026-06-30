@@ -91,11 +91,11 @@ designatedarea = st.sidebar.text_input(
     value="Statewide"
 )
 
-disaster_duration_days = st.sidebar.number_input(
-    "Disaster Duration Days",
+avg_delay_days = st.sidebar.number_input(
+    "avg_delay_days",
     min_value=0,
     max_value=365,
-    value=120
+    value=30
 )
 
 declaration_delay_days = st.sidebar.number_input(
@@ -143,7 +143,7 @@ input_data = pd.DataFrame(
         "declarationtype": declarationtype,
         "incidenttype": incidenttype,
         "designatedarea": designatedarea,
-        "disaster_duration_days": disaster_duration_days,
+        "Average Declaration Delay": "average declaration delay",
         "declaration_delay_days": declaration_delay_days,
         "declaration_year": declaration_year,
         "declaration_month": declaration_month,

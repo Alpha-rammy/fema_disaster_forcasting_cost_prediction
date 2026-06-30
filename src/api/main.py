@@ -48,7 +48,7 @@ class FEMAFeatures(BaseModel):
 
     # Numeric features
     fydeclared: int
-    disaster_duration_days: float
+    avg_delay_days: float
     declaration_delay_days: float
     declaration_year: int
     declaration_month: int
@@ -61,6 +61,7 @@ class FEMAFeatures(BaseModel):
     designatedarea: str
     declaration_season: str
 
+    
 
 # ROOT ENDPOINT
 
