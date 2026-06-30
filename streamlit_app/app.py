@@ -14,7 +14,8 @@ MODEL_PATH = os.path.join(BASE_DIR, "models", "fema_cost_model.pkl")
 
 
 
-# LOAD MODE
+# LOAD MODEL
+
 
 @st.cache_resource
 def load_model():
@@ -23,26 +24,39 @@ def load_model():
 
 model = load_model()
 
-
-
 # PAGE CONFIG
 
 
 st.set_page_config(
-    page_title="TerraNova FEMA Cost Predictor",
+    page_title="TerraNova | FEMA Cost Predictor",
     page_icon="🌪️",
     layout="wide"
 )
 
 
 
-# APP HEADER
+# HEADER
 
-st.title("🌪️ TerraNova FEMA Disaster Cost Prediction")
+
+st.title("🌪️ TerraNova FEMA Disaster Recovery Cost Prediction")
+
 st.markdown(
     """
-    This app predicts estimated FEMA disaster recovery cost using disaster declaration,
-    timing, location, and incident characteristics.
+    ### Predict FEMA Disaster Recovery Costs Using Machine Learning
+
+    TerraNova estimates FEMA disaster recovery costs using **declaration-stage disaster information**
+    including disaster timing, location, and incident characteristics.
+
+    The model was designed to minimize **target leakage** by excluding post-disaster funding variables,
+    making predictions more realistic for operational decision-making.
+    """
+)
+
+st.success(
+    """
+    🏆 **Best Model:** XGBoost Regressor  
+    📈 **R² Score:** 0.8404  
+    🎯 **Target Variable:** log_totalobligated
     """
 )
 
@@ -51,7 +65,7 @@ st.markdown(
 # SIDEBAR INPUTS
 
 
-st.sidebar.header("Disaster Input Features")
+st.sidebar.header("🌪️ Disaster Input Features")
 
 fydeclared = st.sidebar.number_input(
     "Fiscal Year Declared",
@@ -62,12 +76,12 @@ fydeclared = st.sidebar.number_input(
 
 state = st.sidebar.selectbox(
     "State",
-    ["Fl", "Tx", "Ca", "La", "Ny", "Nc", "Ga", "Pr", "Or", "Wa"]
+    ["FL", "TX", "CA", "LA", "NY", "NC", "GA", "PR", "OR", "WA"]
 )
 
 declarationtype = st.sidebar.selectbox(
     "Declaration Type",
-    ["Dr", "Em", "Fm"]
+    ["DR", "EM", "FM"]
 )
 
 incidenttype = st.sidebar.selectbox(
@@ -92,7 +106,7 @@ designatedarea = st.sidebar.text_input(
 )
 
 avg_delay_days = st.sidebar.number_input(
-    "avg_delay_days",
+    "Average Declaration Delay Days",
     min_value=0,
     max_value=365,
     value=30
@@ -128,7 +142,7 @@ declaration_quarter = st.sidebar.selectbox(
 declaration_season = st.sidebar.selectbox(
     "Declaration Season",
     ["Winter", "Spring", "Summer", "Autumn"],
-    index=2
+    index=3
 )
 
 
@@ -143,7 +157,7 @@ input_data = pd.DataFrame(
         "declarationtype": declarationtype,
         "incidenttype": incidenttype,
         "designatedarea": designatedarea,
-        "Average Declaration Delay": "average declaration delay",
+        "avg_delay_days": avg_delay_days,
         "declaration_delay_days": declaration_delay_days,
         "declaration_year": declaration_year,
         "declaration_month": declaration_month,
@@ -153,11 +167,10 @@ input_data = pd.DataFrame(
 )
 
 
+# DISPLAY INPUT PROFILE
 
-# DISPLAY INPUTS
 
-
-st.subheader("Input Disaster Profile")
+st.subheader("📋 Input Disaster Profile")
 st.dataframe(input_data, use_container_width=True)
 
 
@@ -165,7 +178,9 @@ st.dataframe(input_data, use_container_width=True)
 # PREDICTION
 
 
-if st.button("Predict FEMA Recovery Cost"):
+st.markdown("---")
+
+if st.button("🚀 Predict FEMA Recovery Cost"):
 
     predicted_log_cost = model.predict(input_data)[0]
     predicted_cost = np.expm1(predicted_log_cost)
@@ -184,22 +199,36 @@ if st.button("Predict FEMA Recovery Cost"):
             value=f"${predicted_cost:,.2f}"
         )
 
-    st.success("Prediction completed successfully.")
+    st.success("✅ Prediction completed successfully.")
 
 
 
-# MODEL INFO
+# MODEL INFORMATION
 
 
 st.markdown("---")
 
-st.subheader("Model Information")
+st.subheader("📊 Model Information")
+
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Model", "XGBoost")
+col2.metric("R²", "0.8404")
+col3.metric("Target", "log_totalobligated")
+
+st.info(
+    "This model predicts FEMA disaster recovery costs using declaration-stage information while avoiding target leakage."
+)
+
+
+
+# FOOTER
+
+st.markdown("---")
 
 st.markdown(
     """
-    **Final Model:** XGBoost Regressor  
-    **Target Variable:** log_totalobligated  
-    **Best R² Score:** 0.8456  
-    **Deployment:** Streamlit + FastAPI-ready  
+    **TerraNova FEMA Disaster Recovery Cost Prediction**  
+    Built with Python, Scikit-Learn, XGBoost, Streamlit, and FastAPI.
     """
 )
