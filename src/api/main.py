@@ -25,17 +25,17 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 
 
 model = joblib.load(
-    os.path.join(MODEL_DIR, "fema_cost_model.pkl")
+    os.path.join(MODEL_DIR, "terranova_disaster_cost_model.pkl")
 )
 
-print("FEMA cost model loaded successfully!")
+print("TerraNova cost model loaded successfully!")
 
 
 # FAST API
 
 app = FastAPI(
-    title="TerraNova FEMA Cost Prediction API",
-    description="Predict FEMA disaster recovery cost using trained XGBoost model",
+    title="TerraNova Cost Recovery Prediction API",
+    description="Predict disaster recovery cost using trained XGBoost model",
     version="0.1"
 )
 
@@ -44,7 +44,7 @@ app = FastAPI(
 # INPUT SCHEMA
 
 
-class FEMAFeatures(BaseModel):
+class TerraNovaFeatures(BaseModel):
 
     # Numeric features
     fydeclared: int
@@ -70,7 +70,7 @@ class FEMAFeatures(BaseModel):
 def welcome_root():
 
     return {
-        "message": "Welcome to TerraNova FEMA Cost Prediction API"
+        "message": "Welcome to TerraNova Disaster Cost Recovery Prediction API"
     }
 
 
@@ -78,7 +78,7 @@ def welcome_root():
 # PREDICTION ENDPOINT
 
 @app.post("/predict")
-def predict_cost(disaster: FEMAFeatures):
+def predict_cost(disaster: TerraNovaFeatures):
 
     # Convert API input to dataframe
     data = pd.DataFrame([disaster.model_dump()])
