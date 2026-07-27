@@ -1,289 +1,217 @@
-# TerraNova FEMA Disaster Cost Modelling & Evaluation
-# ---------------------------------------------------
-# Trains regression models to predict FEMA disaster recovery cost.
-# Target: log_totalobligated
-# Models: Linear Regression, Random Forest, XGBoost
+"""
+TerraNova Disaster Cost Recovery Forecasting
+Model Training Script
+"""
 
 import os
-import warnings
 import joblib
-import pandas as pd
 import numpy as np
-
-warnings.filterwarnings("ignore")
+import pandas as pd
 
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score
+)
+
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from xgboost import XGBRegressor
 
 
-DATA_PROCESSED = os.path.join("data", "processed")
-MODEL_DIR = os.path.join("models")
+
+# Paths
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
+DATA_PATH = os.path.join(
+    BASE_DIR,
+    "data",
+    "processed",
+    "features_terranova.csv"
+)
+
+MODEL_DIR = os.path.join(
+    BASE_DIR,
+    "models"
+)
+
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 
-def load_data():
-    df = pd.read_csv(os.path.join(DATA_PROCESSED, "features_fema.csv"))
 
-    print("Feature data loaded")
-    print(df.shape)
-    print("\nCategorical columns:")
-    print(df.select_dtypes(include=["object"]).columns.tolist())
-
-    return df
+# Load Data
 
 
-def prepare_target(df):
-    df = df.dropna(subset=["totalobligated"]).copy()
+df = pd.read_csv(
+    DATA_PATH,
+    parse_dates=["declarationdate"]
+)
 
-    if "log_totalobligated" not in df.columns:
-        df["log_totalobligated"] = np.log1p(df["totalobligated"])
+df = df[df["totalobligated"] > 0].copy()
 
-    print(f"\nDisasters: {len(df):,}")
-    print(df["log_totalobligated"].describe())
-
-    return df
+df = df.sort_values("declarationdate")
 
 
-def select_features(df):
-    feature_cols = [
-        "fydeclared",
-        "disaster_duration_days",
-        "declaration_delay_days",
-        "avg_delay_days",
-        "declaration_year",
-        "declaration_month",
-        "declaration_quarter",
-        "state",
-        "declarationtype",
-        "incidenttype",
-        "designatedarea",
-        "declaration_season",
-    ]
 
-    missing_cols = [col for col in feature_cols if col not in df.columns]
+# Features
 
-    if missing_cols:
-        raise ValueError(f"Missing required feature columns: {missing_cols}")
+FEATURE_COLS = [
+    "state",
+    "declarationtype",
+    "incidenttype",
+    "designated_area_count",
+    "declaration_delay_days",
+    "ongoing_at_declaration",
+    "declaration_year",
+    "declaration_month",
+    "declaration_weekday",
+    "declaration_season",
+    "previous_state_disasters",
+    "previous_incident_disasters",
+    "previous_state_incident_disasters",
+    "days_since_previous_state_disaster",
+    "days_since_previous_incident"
+]
 
-    X = df[feature_cols]
-    y = df["log_totalobligated"]
+TARGET = "log_totalobligated"
 
-    print(f"\n{len(feature_cols)} features selected")
-    print(feature_cols)
-    print("\nX shape:", X.shape)
-    print("y shape:", y.shape)
+X = df[FEATURE_COLS]
 
-    return X, y, feature_cols
+y = df[TARGET]
 
 
-def split_data(X, y):
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
+
+# Chronological Train/Test Split
+
+
+split = int(len(df) * 0.80)
+
+X_train = X.iloc[:split]
+X_test = X.iloc[split:]
+
+y_train = y.iloc[:split]
+y_test = y.iloc[split:]
+
+
+
+# Preprocessing
+
+
+numeric_features = X_train.select_dtypes(
+    include=np.number
+).columns
+
+categorical_features = X_train.select_dtypes(
+    exclude=np.number
+).columns
+
+numeric_pipeline = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler())
+])
+
+categorical_pipeline = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OneHotEncoder(handle_unknown="ignore"))
+])
+
+preprocessor = ColumnTransformer([
+    ("numeric", numeric_pipeline, numeric_features),
+    ("categorical", categorical_pipeline, categorical_features)
+])
+
+
+
+# Models
+
+
+models = {
+    "Linear Regression": LinearRegression(),
+
+    "Random Forest": RandomForestRegressor(
+        random_state=42
+    ),
+
+    "XGBoost": XGBRegressor(
         random_state=42
     )
-
-    print(f"\nTrain: {len(X_train):,}")
-    print(f"Test : {len(X_test):,}")
-
-    return X_train, X_test, y_train, y_test
+}
 
 
-def build_preprocessor(X_train):
-    numeric_features = X_train.select_dtypes(
-        include=["int64", "float64"]
-    ).columns.tolist()
+results = []
 
-    categorical_features = X_train.select_dtypes(
-        include=["object"]
-    ).columns.tolist()
+best_model = None
+best_r2 = -999
 
-    print("\nNumeric features:", len(numeric_features))
-    print("Categorical features:", len(categorical_features))
-    print(categorical_features)
 
-    numeric_pipeline = Pipeline(
-        steps=[
-            ("scaler", StandardScaler())
-        ]
+
+# Training Loop
+
+
+for name, estimator in models.items():
+
+    pipeline = Pipeline([
+        ("preprocessor", preprocessor),
+        ("model", estimator)
+    ])
+
+    pipeline.fit(X_train, y_train)
+
+    predictions = pipeline.predict(X_test)
+
+    rmse = np.sqrt(mean_squared_error(y_test, predictions))
+    mae = mean_absolute_error(y_test, predictions)
+    r2 = r2_score(y_test, predictions)
+
+    results.append({
+        "Model": name,
+        "RMSE": rmse,
+        "MAE": mae,
+        "R²": r2
+    })
+
+    if r2 > best_r2:
+        best_r2 = r2
+        best_model = pipeline
+
+
+
+# Results
+
+
+results_df = pd.DataFrame(results)
+
+print(results_df.sort_values(
+    "R²",
+    ascending=False
+))
+
+
+
+# Save Model
+
+
+joblib.dump(
+    best_model,
+    os.path.join(
+        MODEL_DIR,
+        "terranova_disaster_cost_model.pkl"
     )
+)
 
-    categorical_pipeline = Pipeline(
-        steps=[
-            ("encoder", OneHotEncoder(handle_unknown="ignore"))
-        ]
+joblib.dump(
+    FEATURE_COLS,
+    os.path.join(
+        MODEL_DIR,
+        "feature_columns.pkl"
     )
+)
 
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_pipeline, numeric_features),
-            ("cat", categorical_pipeline, categorical_features)
-        ]
-    )
-
-    return preprocessor
-
-
-def define_models():
-    models = {
-        "Linear Regression": LinearRegression(),
-
-        "Random Forest": RandomForestRegressor(
-            n_estimators=200,
-            max_depth=10,
-            random_state=42,
-            n_jobs=-1
-        ),
-
-        "XGBoost": XGBRegressor(
-            n_estimators=300,
-            max_depth=5,
-            learning_rate=0.05,
-            objective="reg:squarederror",
-            random_state=42,
-            n_jobs=-1
-        )
-    }
-
-    return models
-
-
-def train_and_evaluate(
-    models,
-    preprocessor,
-    X_train,
-    X_test,
-    y_train,
-    y_test
-):
-    results = {}
-    trained_models = {}
-
-    for name, model in models.items():
-
-        pipeline = Pipeline(
-            steps=[
-                ("preprocessor", preprocessor),
-                ("model", model)
-            ]
-        )
-
-        pipeline.fit(X_train, y_train)
-
-        preds_log = pipeline.predict(X_test)
-
-        mae_log = mean_absolute_error(y_test, preds_log)
-        rmse_log = np.sqrt(mean_squared_error(y_test, preds_log))
-        r2 = r2_score(y_test, preds_log)
-
-        y_test_original = np.expm1(y_test)
-        preds_original = np.expm1(preds_log)
-
-        mae_original = mean_absolute_error(y_test_original, preds_original)
-        rmse_original = np.sqrt(
-            mean_squared_error(y_test_original, preds_original)
-        )
-
-        results[name] = {
-            "MAE_log": mae_log,
-            "RMSE_log": rmse_log,
-            "R2": r2,
-            "MAE_original": mae_original,
-            "RMSE_original": rmse_original
-        }
-
-        trained_models[name] = pipeline
-
-        print(
-            f"{name:25s} | "
-            f"RMSE log: {rmse_log:.4f} | "
-            f"R2: {r2:.4f} | "
-            f"MAE original: {mae_original:,.2f}"
-        )
-
-    results_df = (
-        pd.DataFrame(results)
-        .T
-        .sort_values("RMSE_log")
-    )
-
-    return results_df, trained_models
-
-
-def show_feature_importance(trained_models):
-    rf_pipeline = trained_models["Random Forest"]
-
-    importances = rf_pipeline.named_steps["model"].feature_importances_
-
-    feature_names = (
-        rf_pipeline
-        .named_steps["preprocessor"]
-        .get_feature_names_out()
-    )
-
-    feature_importance = (
-        pd.DataFrame({
-            "feature": feature_names,
-            "importance": importances
-        })
-        .sort_values("importance", ascending=False)
-    )
-
-    print("\nTop 20 Feature Importances:")
-    print(feature_importance.head(20))
-
-    return feature_importance
-
-
-def save_best_model(results_df, trained_models):
-    best_name = results_df.index[0]
-    best_model = trained_models[best_name]
-
-    model_path = os.path.join(MODEL_DIR, "fema_cost_model.pkl")
-
-    joblib.dump(best_model, model_path)
-
-    print("\nModel Comparison:")
-    print(results_df)
-
-    print(f"\nBest model saved: {best_name}")
-    print("Saved to:", model_path)
-
-    return best_model, best_name
-
-
-def main():
-    df = load_data()
-    df = prepare_target(df)
-
-    X, y, feature_cols = select_features(df)
-
-    X_train, X_test, y_train, y_test = split_data(X, y)
-
-    preprocessor = build_preprocessor(X_train)
-
-    models = define_models()
-
-    results_df, trained_models = train_and_evaluate(
-        models,
-        preprocessor,
-        X_train,
-        X_test,
-        y_train,
-        y_test
-    )
-
-    show_feature_importance(trained_models)
-
-    save_best_model(results_df, trained_models)
-
-
-if __name__ == "__main__":
-    main()
+print("\nModel saved successfully.")

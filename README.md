@@ -1,140 +1,86 @@
-# 🌪️ TerraNova FEMA Disaster Recovery Cost Prediction
+# TerraNova Disaster Cost Recovery Forecasting
 
-## 🎯 Overview
+## Predicting Federal Disaster Recovery Costs Using Early Disaster Declaration Information
 
-TerraNova is an end-to-end machine learning project that forecasts FEMA disaster recovery costs using historical disaster declarations and disaster characteristics available during the early stages of emergency response.
+## Project Overview
 
-Unlike many forecasting models that rely on post-disaster funding information, TerraNova intentionally avoids target leakage by using only features that would realistically be available before recovery funding decisions are made.
+Natural disasters such as hurricanes, floods, wildfires, and severe storms often require significant financial support for response and recovery. However, estimating recovery costs immediately after a disaster declaration is challenging because detailed damage assessments and funding applications can take weeks or months to complete.
 
-The project demonstrates a complete production-ready machine learning workflow—from exploratory data analysis and preprocessing to feature engineering, model development, evaluation, and deployment using FastAPI and Streamlit.
+The goal of this project is to develop a machine learning model that estimates the final federal disaster recovery cost using only information available at the time of the disaster declaration. This provides an early cost forecast that can support emergency planning, resource allocation, and budgeting before the formal funding process begins.
 
-### Key Highlights
-
-- ✅ Disaster Recovery Cost Forecasting
-- ✅ Leakage-Aware Feature Engineering
-- ✅ End-to-End Machine Learning Pipeline
-- ✅ Model Comparison (Linear Regression, Random Forest, XGBoost)
-- ✅ FastAPI REST API
-- ✅ Interactive Streamlit Dashboard
-- ✅ Production-Ready Project Structure
+Unlike many disaster recovery models, this project deliberately excludes Public Assistance funding information from the predictor variables to avoid data leakage. Instead, Public Assistance data is used only to calculate the target variable (final obligated recovery cost), ensuring that the model reflects a realistic real-world deployment scenario.
 
 ---
 
-# 📊 Project Scope
+## Business Problem
 
-| Metric | Value |
-|---------|-------|
-| **Industry** | Emergency Management |
-| **Domain** | Disaster Recovery |
-| **Data Source** | FEMA OpenFEMA |
-| **Records** | ~4,900 Disaster Declarations |
-| **Geographic Coverage** | United States |
-| **Target Variable** | log_totalobligated |
-| **Deployment** | FastAPI + Streamlit |
-| **Best Model** | XGBoost |
+Emergency management agencies must make critical decisions immediately after a disaster declaration, often before detailed project assessments and funding requests are available.
 
----
+Without an early estimate of recovery costs, decision-makers may face challenges in:
 
-# 🏢 Business Context
+- Allocating emergency resources effectively.
+- Planning recovery budgets.
+- Prioritising high-impact disasters.
+- Supporting early strategic decision-making.
 
-## The Challenge
-
-Estimating disaster recovery costs during the early stages of an emergency is difficult because most financial information becomes available only after FEMA funding decisions have already been made.
-
-Many predictive models achieve excellent performance by using variables that would not exist when predictions are actually needed, resulting in target leakage and unrealistic performance.
-
-### Key Challenges
-
-- Uncertain recovery funding requirements
-- Limited information available at declaration time
-- Inefficient emergency resource allocation
-- Increasing disaster frequency and severity
-- Need for reliable early-stage forecasting
+This project addresses that challenge by providing an early prediction of disaster recovery costs using only declaration-stage information.
 
 ---
 
-## The Solution
+## Project Objective
 
-TerraNova predicts FEMA disaster recovery costs using only declaration-stage information, including:
+The objective of this project is to build an interpretable machine learning model that predicts the final federal disaster recovery cost immediately after a disaster declaration.
 
-- Fiscal year declared
+The project focuses on three key principles:
+
+- Using only information available at the declaration stage.
+- Preventing target leakage by excluding funding-related variables from the predictors.
+- Producing an accurate and explainable cost forecasting model suitable for operational use.
+
+---
+
+## Dataset
+
+This project uses disaster data consisting of three related datasets.
+
+### 1. Disaster Declarations
+
+Used to engineer the predictor variables.
+
+Examples include:
+
 - State
+- Disaster type
 - Declaration type
-- Incident type
-- Designated area
-- Declaration timing
-- Temporal disaster characteristics
+- Declaration date
+- Designated areas
+- Historical disaster information
 
-This allows emergency planners to estimate recovery costs before funding information becomes available.
+### 2. Public Assistance
 
----
+Used only to calculate the modelling target:
 
-# 📈 Business Impact
+- Total Federal Recovery Cost
+- Log-transformed Recovery Cost
 
-Accurate early-stage cost prediction can help emergency management agencies:
+No Public Assistance funding variables were used as predictor features.
 
-- Estimate likely recovery costs earlier
-- Improve emergency budgeting
-- Prioritize high-impact disasters
-- Support federal and state recovery planning
-- Allocate emergency resources more efficiently
+### 3. Disaster Summaries
+
+Used for exploratory data analysis and understanding overall disaster trends but excluded from the prediction model.
 
 ---
 
-# 🏗️ Feature Engineering
-
-The project emphasizes leakage-aware feature engineering by using only information available during disaster declaration.
-
-### Temporal Features
-
-- Declaration Delay
-- Declaration Year
-- Declaration Month
-- Declaration Quarter
-- Declaration Season
-- Fiscal Year Declared
-
-### Geographic Features
-
-- State
-- Designated Area
-
-### Disaster Features
-
-- Incident Type
-- Declaration Type
-
-### Experimental Features
-
-Several aggregation and funding-based features were engineered during experimentation.
-
-Examples included:
-
-- Historical declaration counts
-- Public Assistance project statistics
-- Individual Assistance indicators
-- Disaster summary metrics
-
-These features were useful during experimentation but were excluded from the final production model if they relied on future information or introduced target leakage.
-
----
-
-# 🏗️ System Architecture
+## Machine Learning Workflow
 
 ```text
-Raw FEMA Data
+Data Collection
         │
         ▼
-Exploratory Data Analysis
-        │
-        ▼
-Data Preprocessing
+Data Cleaning
         │
         ▼
 Feature Engineering
-        │
-        ▼
-Train/Test Split
         │
         ▼
 Model Training
@@ -143,420 +89,215 @@ Model Training
 Model Evaluation
         │
         ▼
-FastAPI Deployment
+Model Explainability
         │
         ▼
-Streamlit Dashboard
+FastAPI Deployment
 ```
 
 ---
 
-# 🤖 Model Development
-
-## Models Evaluated
-
-- Linear Regression
-- Random Forest Regressor
-- XGBoost Regressor
-
-The objective was to predict FEMA recovery costs while avoiding target leakage and preserving real-world prediction capability.
-
-### Target Variable
+# Project Structure
 
 ```
-log_totalobligated
+TerraNova_Disaster_Cost_Forecasting/
+│
+├── data/
+│   ├── raw/
+│   └── processed/
+│
+├── models/
+│   ├── terranova_disaster_cost_model.pkl
+│   └── feature_columns.pkl
+│
+├── notebooks/
+│   ├── 01_eda.ipynb
+│   ├── 02_preprocessing.ipynb
+│   ├── 03_feature_engineering.ipynb
+│   ├── 04_modeling.ipynb
+│   └── 05_explainability.ipynb
+│
+├── reports/
+│   └── figures/
+│
+├── src/
+│   ├── ingestion/
+│   ├── preprocessing/
+│   ├── features/
+│   ├── models/
+│   └── api/
+│
+├── requirements.txt
+└── README.md
 ```
 
-Because disaster recovery costs are highly right-skewed, a logarithmic transformation was applied before model training.
+---
+
+# Technologies Used
+
+## Programming
+
+- Python 3.x
+
+## Data Processing
+
+- Pandas
+- NumPy
+
+## Data Visualisation
+
+- Matplotlib
+- Seaborn
+
+## Machine Learning
+
+- Scikit-learn
+- XGBoost
+
+## Model Explainability
+
+- SHAP
+
+## Model Deployment
+
+- FastAPI
+- Uvicorn
 
 ---
 
-# 🤖 Model Performance
+# Feature Engineering
 
-| Model | RMSE (Log Scale) | R² Score | MAE (Original Scale) |
-|--------|------------------|----------|----------------------|
-| Linear Regression | **5.3837** | **0.5024** | **$35.32 Million** |
-| Random Forest | **3.1050** | **0.8345** | **$64.14 Million** |
-| XGBoost | **3.0487** | **0.8404** | **$66.97 Million** |
+The objective of feature engineering was to create meaningful predictors using only information available immediately after a disaster declaration.
 
----
-
-# 🏆 Best Model — XGBoost
-
-### Performance Summary
-
-- **RMSE (Log):** 3.0487
-- **R² Score:** 0.8404
-- **Target Variable:** log_totalobligated
-- **Deployment:** FastAPI + Streamlit
-
----
-
-## Model Insights
-
-The final XGBoost model explains approximately **84% of the variation in FEMA disaster recovery costs** while relying only on declaration-stage information.
-
-Although earlier experiments achieved slightly higher performance using funding-related variables, these features were intentionally removed because they introduced target leakage and would not be available during real-world prediction.
-
-This makes the final model more realistic, interpretable, and suitable for operational deployment.
-
----
-
-# 🔍 Feature Importance
-
-The most influential features included:
-
-- Declaration Year
-- # 🌪️ TerraNova FEMA Disaster Recovery Cost Prediction
-
-## 🎯 Overview
-
-TerraNova is an end-to-end machine learning project that forecasts FEMA disaster recovery costs using historical disaster declarations and disaster characteristics available during the early stages of emergency response.
-
-Unlike many forecasting models that rely on post-disaster funding information, TerraNova intentionally avoids target leakage by using only features that would realistically be available before recovery funding decisions are made.
-
-The project demonstrates a complete production-ready machine learning workflow—from exploratory data analysis and preprocessing to feature engineering, model development, evaluation, and deployment using FastAPI and Streamlit.
-
-### Key Highlights
-
-- ✅ Disaster Recovery Cost Forecasting
-- ✅ Leakage-Aware Feature Engineering
-- ✅ End-to-End Machine Learning Pipeline
-- ✅ Model Comparison (Linear Regression, Random Forest, XGBoost)
-- ✅ FastAPI REST API
-- ✅ Interactive Streamlit Dashboard
-- ✅ Production-Ready Project Structure
-
----
-
-# 📊 Project Scope
-
-| Metric | Value |
-|---------|-------|
-| **Industry** | Emergency Management |
-| **Domain** | Disaster Recovery |
-| **Data Source** | FEMA OpenFEMA |
-| **Records** | ~4,900 Disaster Declarations |
-| **Geographic Coverage** | United States |
-| **Target Variable** | log_totalobligated |
-| **Deployment** | FastAPI + Streamlit |
-| **Best Model** | XGBoost |
-
----
-
-# 🏢 Business Context
-
-## The Challenge
-
-Estimating disaster recovery costs during the early stages of an emergency is difficult because most financial information becomes available only after FEMA funding decisions have already been made.
-
-Many predictive models achieve excellent performance by using variables that would not exist when predictions are actually needed, resulting in target leakage and unrealistic performance.
-
-### Key Challenges
-
-- Uncertain recovery funding requirements
-- Limited information available at declaration time
-- Inefficient emergency resource allocation
-- Increasing disaster frequency and severity
-- Need for reliable early-stage forecasting
-
----
-
-## The Solution
-
-TerraNova predicts FEMA disaster recovery costs using only declaration-stage information, including:
-
-- Fiscal year declared
-- State
-- Declaration type
-- Incident type
-- Designated area
-- Declaration timing
-- Temporal disaster characteristics
-
-This allows emergency planners to estimate recovery costs before funding information becomes available.
-
----
-
-# 📈 Business Impact
-
-Accurate early-stage cost prediction can help emergency management agencies:
-
-- Estimate likely recovery costs earlier
-- Improve emergency budgeting
-- Prioritize high-impact disasters
-- Support federal and state recovery planning
-- Allocate emergency resources more efficiently
-
----
-
-# 🏗️ Feature Engineering
-
-The project emphasizes leakage-aware feature engineering by using only information available during disaster declaration.
+The following features were engineered:
 
 ### Temporal Features
 
-- Declaration Delay
-- Declaration Year
-- Declaration Month
-- Declaration Quarter
-- Declaration Season
-- Fiscal Year Declared
+- Declaration delay
+- Declaration month
+- Declaration year
+- Declaration weekday
+- Declaration season
 
 ### Geographic Features
 
 - State
-- Designated Area
+- Number of designated disaster areas
 
-### Disaster Features
+### Historical Disaster Features
 
-- Incident Type
-- Declaration Type
+- Previous disasters in the state
+- Previous disasters of the same incident type
+- Previous disasters of the same incident type within the state
+- Days since the previous state disaster
+- Days since the previous disaster of the same incident type
 
-### Experimental Features
+### Operational Feature
 
-Several aggregation and funding-based features were engineered during experimentation.
+- Ongoing disaster indicator at the time of declaration
 
-Examples included:
-
-- Historical declaration counts
-- Public Assistance project statistics
-- Individual Assistance indicators
-- Disaster summary metrics
-
-These features were useful during experimentation but were excluded from the final production model if they relied on future information or introduced target leakage.
+These engineered features simulate the information that would realistically be available during the early stages of disaster response.
 
 ---
 
-# 🏗️ System Architecture
+# Machine Learning Models
 
-```text
-Raw FEMA Data
-        │
-        ▼
-Exploratory Data Analysis
-        │
-        ▼
-Data Preprocessing
-        │
-        ▼
-Feature Engineering
-        │
-        ▼
-Train/Test Split
-        │
-        ▼
-Model Training
-        │
-        ▼
-Model Evaluation
-        │
-        ▼
-FastAPI Deployment
-        │
-        ▼
-Streamlit Dashboard
-```
+Three regression models were developed and evaluated.
+
+| Model | Purpose |
+|-------|----------|
+| Linear Regression | Baseline model |
+| Random Forest Regressor | Ensemble tree model |
+| XGBoost Regressor | Gradient boosting model |
+
+The models were evaluated using a chronological train-test split to simulate real-world forecasting, where future disasters are predicted using knowledge from past events.
 
 ---
 
-# 🤖 Model Development
+# Model Performance
 
-## Models Evaluated
+The models were evaluated using:
 
-- Linear Regression
-- Random Forest Regressor
-- XGBoost Regressor
+- Root Mean Squared Error (RMSE)
+- Mean Absolute Error (MAE)
+- R² Score
 
-The objective was to predict FEMA recovery costs while avoiding target leakage and preserving real-world prediction capability.
+| Model | RMSE (Log Scale) | R² Score |
+|--------|-----------------:|----------:|
+| Linear Regression | 1.383 | 0.516 |
+| Random Forest | 1.125 | 0.679 |
+| XGBoost | 1.112 | **0.688** |
 
-### Target Variable
-
-```
-log_totalobligated
-```
-
-Because disaster recovery costs are highly right-skewed, a logarithmic transformation was applied before model training.
+XGBoost achieved the best overall predictive performance and was selected as the final production model.
 
 ---
 
-# 🤖 Model Performance
+# Model Explainability
 
-| Model | RMSE (Log Scale) | R² Score | MAE (Original Scale) |
-|--------|------------------|----------|----------------------|
-| Linear Regression | **5.3837** | **0.5024** | **$35.32 Billion** |
-| Random Forest | **3.1050** | **0.8345** | **$64.14 Million** |
-| XGBoost | **3.0487** | **0.8404** | **$66.97 Million** |
+To improve transparency and support decision-making, the final XGBoost model was interpreted using multiple explainability techniques.
 
----
+The analysis included:
 
-# 🏆 Best Model — XGBoost
+- Feature Importance
+- SHAP Summary Plot
+- SHAP Waterfall Plot
 
-### Performance Summary
-
-- **RMSE (Log):** 3.0487
-- **R² Score:** 0.8404
-- **Target Variable:** log_totalobligated
-- **Deployment:** FastAPI + Streamlit
+These techniques helped identify the declaration-stage factors that contributed most to the predicted recovery costs and provided both global and individual prediction explanations.
 
 ---
 
-## Model Insights
+---
 
-The final XGBoost model explains approximately **84% of the variation in FEMA disaster recovery costs** while relying only on declaration-stage information.
+# Business Impact
 
-Although earlier experiments achieved slightly higher performance using funding-related variables, these features were intentionally removed because they introduced target leakage and would not be available during real-world prediction.
+Accurately estimating disaster recovery costs immediately after a disaster declaration can help emergency management agencies make faster and more informed decisions.
 
-This makes the final model more realistic, interpretable, and suitable for operational deployment.
+Potential applications include:
+
+- Early disaster recovery budgeting
+- Resource allocation and planning
+- Prioritisation of high-impact disasters
+- Financial risk assessment
+- Decision support for emergency management agencies
+
+By relying only on declaration-stage information, the model can be deployed before detailed damage assessments or funding applications become available.
 
 ---
 
-# 🔍 Feature Importance
+# FastAPI Deployment
 
-The most influential features included:
+The trained XGBoost model was deployed using **FastAPI** to provide real-time disaster recovery cost predictions.
 
-- Declaration Year
-- Average Declaration Delay
-- Declaration Delay
-- Declaration Type
-- Fiscal Year Declared
-- Incident Type
-- State
-- Designated Area
+### Available Endpoint
 
-These findings suggest that disaster timing and declaration characteristics provide strong predictive signals even without using post-disaster funding information.
+**POST** `/predict`
 
----
+The API accepts declaration-stage information and returns:
 
-# 📸 Application Screenshots
+- Predicted recovery cost (log scale)
+- Estimated federal recovery cost (original dollar scale)
 
-## Streamlit Dashboard
-
-```markdown
-![Streamlit Dashboard](assets/streamlit_dashboard.png)
-```
-
-## Prediction Example
-
-```markdown
-![Prediction Example](assets/prediction_example.png)
-```
-
-## FastAPI Swagger Documentation
-
-```markdown
-![Swagger API](assets/swagger_api.png)
-```
+This demonstrates how a machine learning model can be integrated into operational decision-support systems.
 
 ---
 
-# 🚀 API Endpoint
+# Installation
 
-## POST /predict
-
-### Example Request
-
-```json
-{
-    "fydeclared": 2024,
-    "state": "FL",
-    "declarationtype": "DR",
-    "incidenttype": "Hurricane",
-    "designatedarea": "Statewide",
-    "declaration_delay_days": 30,
-    "declaration_year": 2024,
-    "declaration_month": 9,
-    "declaration_quarter": 3,
-    "declaration_season": "Autumn"
-}
-```
-
-### Example Response
-
-```json
-{
-    "predicted_log_cost": 18.02,
-    "predicted_recovery_cost": 67110464
-}
-```
-
----
-
-# 📁 Project Structure
-
-```text
-TerraNova_project/
-│
-├── assets/
-│   ├── streamlit_dashboard.png
-│   ├── prediction_example.png
-│   └── swagger_api.png
-│
-├── data/
-│   ├── raw/
-│   │   ├── declarations.csv
-│   │   ├── public_assistance.csv
-│   │   └── disaster_summaries.csv
-│   │
-│   └── processed/
-│       └── features_fema.csv
-│
-├── models/
-│   └── fema_cost_model.pkl
-│
-├── notebooks/
-│   ├── 01_eda.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_feature_engineering.ipynb
-│   └── 04_modeling.ipynb
-│
-├── src/
-│   ├── ingestion/
-│   ├── preprocessing/
-│   ├── features/
-│   ├── models/
-│   ├── api/
-│   └── config.py
-│
-├── streamlit_app/
-│   └── app.py
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
----
-
-# 🛠️ Technology Stack
-
-| Category | Technologies |
-|-----------|--------------|
-| Machine Learning | Scikit-Learn, XGBoost |
-| Data Processing | Pandas, NumPy |
-| Visualization | Matplotlib, Seaborn |
-| API Development | FastAPI |
-| Dashboard | Streamlit |
-| Model Serialization | Joblib |
-| Development Environment | VS Code |
-| Version Control | Git, GitHub |
-
----
-
-# 🚀 Quick Start
-
-## Clone Repository
+Clone the repository:
 
 ```bash
-git clone https://github.com/Alpha-rammy/TerraNova_project.git
-cd TerraNova_project
+git clone https://github.com/<your_username>/TerraNova_Disaster_Cost_Forecasting.git
+
+cd TerraNova_Disaster_Cost_Forecasting
 ```
 
-## Create Virtual Environment
+Create a virtual environment:
 
 ```bash
 python -m venv venv
 ```
+
+Activate the environment:
 
 ### Windows
 
@@ -564,274 +305,127 @@ python -m venv venv
 venv\Scripts\activate
 ```
 
-### macOS/Linux
+### macOS / Linux
 
 ```bash
 source venv/bin/activate
 ```
 
-## Install Requirements
+Install the required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run FastAPI
+---
+
+# Running the Project
+
+### 1. Perform Exploratory Data Analysis
+
+Open:
+
+```
+notebooks/01_eda.ipynb
+```
+
+---
+
+### 2. Preprocess the Data
+
+Run:
+
+```
+notebooks/02_preprocessing.ipynb
+```
+
+---
+
+### 3. Engineer Features
+
+Run:
+
+```
+notebooks/03_feature_engineering.ipynb
+```
+
+---
+
+### 4. Train the Models
+
+Run:
+
+```
+notebooks/04_modeling.ipynb
+```
+
+---
+
+### 5. Explain Model Predictions
+
+Run:
+
+```
+notebooks/05_explainability.ipynb
+```
+
+---
+
+### 6. Launch the FastAPI Application
 
 ```bash
 uvicorn src.api.main:app --reload
 ```
 
-Visit:
+Open:
 
 ```
 http://127.0.0.1:8000/docs
 ```
 
-## Run Streamlit
-
-```bash
-streamlit run streamlit_app/app.py
-```
+to access the interactive Swagger API documentation.
 
 ---
 
-# 📌 Key Findings
+# Future Improvements
 
-- XGBoost achieved the strongest predictive performance.
-- Disaster recovery costs are highly right-skewed.
-- Log transformation substantially improved model stability.
-- Temporal declaration characteristics were among the strongest predictors.
-- Tree-based ensemble methods outperformed linear regression.
-- Removing leakage features resulted in a more realistic and deployable model.
-- The final XGBoost model explains approximately **84% of the variability** in FEMA recovery costs using declaration-stage information only.
+Possible enhancements include:
 
----
-
-# 🔮 Future Improvements
-
-Potential future enhancements include:
-
-- Time-based cross-validation
-- Hyperparameter optimization with Optuna
-- SHAP explainability
-- MLflow experiment tracking
-- Docker containerization
-- Cloud deployment (Azure/AWS)
-- CI/CD using GitHub Actions
+- Incorporating weather and climate data
+- Integrating satellite imagery for damage assessment
+- Including socioeconomic and demographic indicators
+- Hyperparameter optimisation using Optuna
+- Continuous model retraining as new disaster data becomes available
+- Cloud deployment using Azure or AWS
+- Building an interactive dashboard for operational monitoring
 
 ---
 
+# Key Skills Demonstrated
 
-- Declaration Delay
-- Average Declaration Delay
-- Declaration Type
-- Fiscal Year Declared
-- Incident Type
-- State
-- Designated Area
-
-These findings suggest that disaster timing and declaration characteristics provide strong predictive signals even without using post-disaster funding information.
-
----
-
-## 📸 Application Screenshots
-
-### Streamlit Dashboard
-
-![Streamlit Dashboard](assets/streamlit_dashboard.png)
-
-
-### Prediction Example
-
-![Prediction Example](assets/prediction_example.png)
-
-
-### FastAPI Swagger Documentation
-
-![Swagger API](assets/swagger_api.png)
-
+- Data Cleaning
+- Exploratory Data Analysis (EDA)
+- Feature Engineering
+- Regression Modeling
+- Time-Aware Train-Test Splitting
+- Model Evaluation
+- Model Explainability with SHAP
+- Pipeline Development
+- FastAPI Deployment
+- Git & GitHub Version Control
 
 ---
 
-# 🚀 API Endpoint
-
-## POST /predict
-
-### Example Request
-
-```json
-{
-    "fydeclared": 2024,
-    "state": "FL",
-    "declarationtype": "DR",
-    "incidenttype": "Hurricane",
-    "designatedarea": "Statewide",
-    "declaration_delay_days": 30,
-    "declaration_year": 2024,
-    "declaration_month": 9,
-    "declaration_quarter": 3,
-    "declaration_season": "Autumn"
-}
-```
-
-### Example Response
-
-```json
-{
-    "predicted_log_cost": 18.02,
-    "predicted_recovery_cost": 67110464
-}
-```
-
----
-
-# 📁 Project Structure
-
-```text
-TerraNova_project/
-│
-├── assets/
-│   ├── streamlit_dashboard.png
-│   ├── prediction_example.png
-│   └── swagger_api.png
-│
-├── data/
-│   ├── raw/
-│   │   ├── declarations.csv
-│   │   ├── public_assistance.csv
-│   │   └── disaster_summaries.csv
-│   │
-│   └── processed/
-│       └── features_fema.csv
-│
-├── models/
-│   └── fema_cost_model.pkl
-│
-├── notebooks/
-│   ├── 01_eda.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_feature_engineering.ipynb
-│   └── 04_modeling.ipynb
-│
-├── src/
-│   ├── ingestion/
-│   ├── preprocessing/
-│   ├── features/
-│   ├── models/
-│   ├── api/
-│   └── config.py
-│
-├── streamlit_app/
-│   └── app.py
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
----
-
-# 🛠️ Technology Stack
-
-| Category | Technologies |
-|-----------|--------------|
-| Machine Learning | Scikit-Learn, XGBoost |
-| Data Processing | Pandas, NumPy |
-| Visualization | Matplotlib, Seaborn |
-| API Development | FastAPI |
-| Dashboard | Streamlit |
-| Model Serialization | Joblib |
-| Development Environment | VS Code |
-| Version Control | Git, GitHub |
-
----
-
-# 🚀 Quick Start
-
-## Clone Repository
-
-```bash
-git clone https://github.com/Alpha-rammy/TerraNova_project.git
-cd TerraNova_project
-```
-
-## Create Virtual Environment
-
-```bash
-python -m venv venv
-```
-
-### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-### macOS/Linux
-
-```bash
-source venv/bin/activate
-```
-
-## Install Requirements
-
-```bash
-pip install -r requirements.txt
-```
-
-## Run FastAPI
-
-```bash
-uvicorn src.api.main:app --reload
-```
-
-Visit:
-
-```
-http://127.0.0.1:8000/docs
-```
-
-## Run Streamlit
-
-```bash
-streamlit run streamlit_app/app.py
-```
-
----
-
-# 📌 Key Findings
-
-- XGBoost achieved the strongest predictive performance.
-- Disaster recovery costs are highly right-skewed.
-- Log transformation substantially improved model stability.
-- Temporal declaration characteristics were among the strongest predictors.
-- Tree-based ensemble methods outperformed linear regression.
-- Removing leakage features resulted in a more realistic and deployable model.
-- The final XGBoost model explains approximately **84% of the variability** in FEMA recovery costs using declaration-stage information only.
-
----
-
-# 🔮 Future Improvements
-
-Potential future enhancements include:
-
-- Time-based cross-validation
-- Hyperparameter optimization with Optuna
-- SHAP explainability
-- MLflow experiment tracking
-- Docker containerization
-- Cloud deployment (Azure/AWS)
-- CI/CD using GitHub Actions
-
----
-
-# 👨‍💻 Author
+# Author
 
 **Ransom Chukwu**
 
-MD | Master of Public Health (MPH)
+Medical Doctor | Public Health Professional | Data Scientist
 
-Data Scientist | Machine Learning | Health Informatics | Public Health Analytics
+Passionate about applying machine learning and analytics to support evidence-based decision-making in healthcare, disaster management, and public sector operations.
 
-GitHub: https://github.com/Alpha-rammy
+---
+
+# Acknowledgements
+
+This project uses publicly available disaster data provided by the **Federal Emergency Management Agency (FEMA)**. The data was used solely for educational and portfolio purposes to demonstrate end-to-end data science and machine learning workflows.

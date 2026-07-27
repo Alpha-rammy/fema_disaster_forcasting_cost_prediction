@@ -11,10 +11,8 @@ __pycache__/
 
 # Data
 data/raw/
-data/processed/
 
-# Models
-models/*.pkl
+
 
 # MLflow
 mlruns/
@@ -22,3 +20,7 @@ mlflow.db
 
 # VS Code
 .vscode
+
+# operating system
+.DS_Store
+Thumbs.db
