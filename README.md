@@ -2,48 +2,51 @@
 
 ## Predicting Federal Disaster Recovery Costs Using Early Disaster Declaration Information
 
-## Project Overview
+---
+
+# Project Overview
 
 Natural disasters such as hurricanes, floods, wildfires, and severe storms often require significant financial support for response and recovery. However, estimating recovery costs immediately after a disaster declaration is challenging because detailed damage assessments and funding applications can take weeks or months to complete.
 
-The goal of this project is to develop a machine learning model that estimates the final federal disaster recovery cost using only information available at the time of the disaster declaration. This provides an early cost forecast that can support emergency planning, resource allocation, and budgeting before the formal funding process begins.
+This project develops a machine learning model that predicts the final federal disaster recovery cost using only information available at the time of disaster declaration. The model provides an early estimate of recovery costs to support emergency planning, budgeting, and resource allocation before the formal recovery process begins.
 
-Unlike many disaster recovery models, this project deliberately excludes Public Assistance funding information from the predictor variables to avoid data leakage. Instead, Public Assistance data is used only to calculate the target variable (final obligated recovery cost), ensuring that the model reflects a realistic real-world deployment scenario.
+Unlike many disaster recovery models, this project deliberately excludes Public Assistance funding information from the predictor variables to prevent target leakage. Public Assistance data is used only to calculate the modelling target.
 
 ---
 
-## Business Problem
+# Business Problem
 
 Emergency management agencies must make critical decisions immediately after a disaster declaration, often before detailed project assessments and funding requests are available.
 
-Without an early estimate of recovery costs, decision-makers may face challenges in:
+Without an early estimate of recovery costs, decision-makers may struggle to:
 
-- Allocating emergency resources effectively.
-- Planning recovery budgets.
-- Prioritising high-impact disasters.
-- Supporting early strategic decision-making.
+- Allocate emergency resources effectively.
+- Plan recovery budgets.
+- Prioritise high-impact disasters.
+- Support strategic decision-making during disaster response.
 
 This project addresses that challenge by providing an early prediction of disaster recovery costs using only declaration-stage information.
 
 ---
 
-## Project Objective
+# Project Objective
 
 The objective of this project is to build an interpretable machine learning model that predicts the final federal disaster recovery cost immediately after a disaster declaration.
 
-The project focuses on three key principles:
+The project focuses on:
 
-- Using only information available at the declaration stage.
-- Preventing target leakage by excluding funding-related variables from the predictors.
-- Producing an accurate and explainable cost forecasting model suitable for operational use.
+- Using only declaration-stage information.
+- Preventing target leakage.
+- Producing an accurate and explainable forecasting model.
+- Deploying the trained model using FastAPI.
 
 ---
 
-## Dataset
+# Dataset
 
-This project uses disaster data consisting of three related datasets.
+This project uses publicly available FEMA disaster datasets.
 
-### 1. Disaster Declarations
+### Disaster Declarations
 
 Used to engineer the predictor variables.
 
@@ -53,45 +56,45 @@ Examples include:
 - Disaster type
 - Declaration type
 - Declaration date
-- Designated areas
+- Designated disaster areas
 - Historical disaster information
 
-### 2. Public Assistance
+### Public Assistance
 
-Used only to calculate the modelling target:
+Used only to calculate the modelling target.
 
 - Total Federal Recovery Cost
 - Log-transformed Recovery Cost
 
-No Public Assistance funding variables were used as predictor features.
+No funding variables were used as model predictors.
 
-### 3. Disaster Summaries
+### Disaster Summaries
 
-Used for exploratory data analysis and understanding overall disaster trends but excluded from the prediction model.
+Used for exploratory analysis only and excluded from model training.
 
 ---
 
-## Machine Learning Workflow
+# Machine Learning Workflow
 
 ```text
 Data Collection
-        │
-        ▼
+      │
+      ▼
 Data Cleaning
-        │
-        ▼
+      │
+      ▼
 Feature Engineering
-        │
-        ▼
+      │
+      ▼
 Model Training
-        │
-        ▼
+      │
+      ▼
 Model Evaluation
-        │
-        ▼
+      │
+      ▼
 Model Explainability
-        │
-        ▼
+      │
+      ▼
 FastAPI Deployment
 ```
 
@@ -99,8 +102,8 @@ FastAPI Deployment
 
 # Project Structure
 
-```
-TerraNova_Disaster_Cost_Forecasting/
+```text
+TerraNova_Project/
 │
 ├── data/
 │   ├── raw/
@@ -118,14 +121,13 @@ TerraNova_Disaster_Cost_Forecasting/
 │   └── 05_explainability.ipynb
 │
 ├── reports/
-│   └── figures/
 │
 ├── src/
+│   ├── api/
 │   ├── ingestion/
 │   ├── preprocessing/
 │   ├── features/
-│   ├── models/
-│   └── api/
+│   └── models/
 │
 ├── requirements.txt
 └── README.md
@@ -137,45 +139,59 @@ TerraNova_Disaster_Cost_Forecasting/
 
 ## Programming
 
-- Python 3.x
+- Python
 
 ## Data Processing
 
 - Pandas
 - NumPy
 
-## Data Visualisation
-
-- Matplotlib
-- Seaborn
-
 ## Machine Learning
 
 - Scikit-learn
 - XGBoost
 
-## Model Explainability
+## Explainability
 
 - SHAP
 
-## Model Deployment
+## Visualisation
+
+- Matplotlib
+- Seaborn
+
+## Deployment
 
 - FastAPI
 - Uvicorn
 
 ---
 
+# Exploratory Data Analysis
+
+The exploratory analysis examined disaster declaration trends, seasonal patterns and recovery cost distributions before model development.
+
+### Declaration Overview
+
+![Declaration Overview](reports/declaration_overview.png)
+
+### Exploratory Data Analysis Summary
+
+![EDA Summary](reports/eda_summary.png)
+
+---
+
 # Feature Engineering
 
-The objective of feature engineering was to create meaningful predictors using only information available immediately after a disaster declaration.
+Feature engineering focused on creating predictors that would realistically be available immediately after a disaster declaration.
 
-The following features were engineered:
+The engineered features include:
 
 ### Temporal Features
 
 - Declaration delay
-- Declaration month
 - Declaration year
+- Declaration month
 - Declaration weekday
 - Declaration season
 
@@ -184,120 +200,124 @@ The following features were engineered:
 - State
 - Number of designated disaster areas
 
-### Historical Disaster Features
+### Historical Features
 
 - Previous disasters in the state
 - Previous disasters of the same incident type
-- Previous disasters of the same incident type within the state
-- Days since the previous state disaster
-- Days since the previous disaster of the same incident type
+- Previous state-incident disasters
+- Days since previous disaster
 
 ### Operational Feature
 
-- Ongoing disaster indicator at the time of declaration
-
-These engineered features simulate the information that would realistically be available during the early stages of disaster response.
+- Ongoing disaster indicator
 
 ---
 
 # Machine Learning Models
 
-Three regression models were developed and evaluated.
+Three regression models were developed and compared.
 
 | Model | Purpose |
 |-------|----------|
-| Linear Regression | Baseline model |
-| Random Forest Regressor | Ensemble tree model |
-| XGBoost Regressor | Gradient boosting model |
-
-The models were evaluated using a chronological train-test split to simulate real-world forecasting, where future disasters are predicted using knowledge from past events.
+| Linear Regression | Baseline |
+| Random Forest | Ensemble Model |
+| XGBoost | Gradient Boosting |
 
 ---
 
 # Model Performance
 
-The models were evaluated using:
+Models were evaluated using:
 
-- Root Mean Squared Error (RMSE)
-- Mean Absolute Error (MAE)
+- RMSE
+- MAE
 - R² Score
 
-| Model | RMSE (Log Scale) | R² Score |
-|--------|-----------------:|----------:|
+| Model | RMSE | R² |
+|-------|------:|------:|
 | Linear Regression | 1.383 | 0.516 |
 | Random Forest | 1.125 | 0.679 |
-| XGBoost | 1.112 | **0.688** |
+| XGBoost | **1.112** | **0.688** |
 
-XGBoost achieved the best overall predictive performance and was selected as the final production model.
+The XGBoost model achieved the best overall performance and was selected as the final production model.
+
+### Model Comparison
+
+![Model Comparison](reports/model_comparison.png)
 
 ---
 
 # Model Explainability
 
-To improve transparency and support decision-making, the final XGBoost model was interpreted using multiple explainability techniques.
+To improve transparency, the final model was interpreted using Feature Importance and SHAP.
 
-The analysis included:
+## Feature Importance
 
-- Feature Importance
-- SHAP Summary Plot
-- SHAP Waterfall Plot
+![Feature Importance](reports/feature_importance.png)
 
-These techniques helped identify the declaration-stage factors that contributed most to the predicted recovery costs and provided both global and individual prediction explanations.
+The feature importance plot highlights the declaration-stage variables that contributed most to recovery cost predictions.
 
 ---
+
+## SHAP Summary Plot
+
+![SHAP Summary](reports/shap_summary_plot.png)
+
+The SHAP summary plot provides a global explanation of how each feature influences model predictions.
+
+---
+
+## SHAP Waterfall Plot
+
+![SHAP Waterfall](reports/shap_waterfall_plot.png)
+
+The SHAP waterfall plot explains an individual prediction by showing how each feature increases or decreases the estimated recovery cost.
 
 ---
 
 # Business Impact
 
-Accurately estimating disaster recovery costs immediately after a disaster declaration can help emergency management agencies make faster and more informed decisions.
+This model provides an early estimate of disaster recovery costs to support:
 
-Potential applications include:
-
-- Early disaster recovery budgeting
-- Resource allocation and planning
-- Prioritisation of high-impact disasters
+- Disaster response planning
+- Resource allocation
+- Recovery budgeting
 - Financial risk assessment
-- Decision support for emergency management agencies
-
-By relying only on declaration-stage information, the model can be deployed before detailed damage assessments or funding applications become available.
+- Evidence-based emergency management
 
 ---
 
 # FastAPI Deployment
 
-The trained XGBoost model was deployed using **FastAPI** to provide real-time disaster recovery cost predictions.
+The trained XGBoost model was deployed using FastAPI to provide real-time disaster recovery cost predictions.
 
-### Available Endpoint
+### Sample Prediction Response
 
-**POST** `/predict`
-
-The API accepts declaration-stage information and returns:
-
-- Predicted recovery cost (log scale)
-- Estimated federal recovery cost (original dollar scale)
-
-This demonstrates how a machine learning model can be integrated into operational decision-support systems.
+![Prediction Response](reports/fastAPI_response_body.png)
 
 ---
 
 # Installation
 
-Clone the repository:
+Clone the repository.
 
 ```bash
-git clone https://github.com/<your_username>/TerraNova_Disaster_Cost_Forecasting.git
-
-cd TerraNova_Disaster_Cost_Forecasting
+git clone https://github.com/Alpha-rammy/TerraNova_Project.git
 ```
 
-Create a virtual environment:
+Move into the project folder.
+
+```bash
+cd TerraNova_Project
+```
+
+Create a virtual environment.
 
 ```bash
 python -m venv venv
 ```
 
-Activate the environment:
+Activate the environment.
 
 ### Windows
 
@@ -305,13 +325,13 @@ Activate the environment:
 venv\Scripts\activate
 ```
 
-### macOS / Linux
+### macOS/Linux
 
 ```bash
 source venv/bin/activate
 ```
 
-Install the required packages:
+Install dependencies.
 
 ```bash
 pip install -r requirements.txt
@@ -321,57 +341,15 @@ pip install -r requirements.txt
 
 # Running the Project
 
-### 1. Perform Exploratory Data Analysis
+Run the notebooks in order:
 
-Open:
+1. 01_eda.ipynb
+2. 02_preprocessing.ipynb
+3. 03_feature_engineering.ipynb
+4. 04_modeling.ipynb
+5. 05_explainability.ipynb
 
-```
-notebooks/01_eda.ipynb
-```
-
----
-
-### 2. Preprocess the Data
-
-Run:
-
-```
-notebooks/02_preprocessing.ipynb
-```
-
----
-
-### 3. Engineer Features
-
-Run:
-
-```
-notebooks/03_feature_engineering.ipynb
-```
-
----
-
-### 4. Train the Models
-
-Run:
-
-```
-notebooks/04_modeling.ipynb
-```
-
----
-
-### 5. Explain Model Predictions
-
-Run:
-
-```
-notebooks/05_explainability.ipynb
-```
-
----
-
-### 6. Launch the FastAPI Application
+Launch the API.
 
 ```bash
 uvicorn src.api.main:app --reload
@@ -379,40 +357,37 @@ uvicorn src.api.main:app --reload
 
 Open:
 
-```
+```text
 http://127.0.0.1:8000/docs
 ```
-
-to access the interactive Swagger API documentation.
 
 ---
 
 # Future Improvements
 
-Possible enhancements include:
+Potential enhancements include:
 
-- Incorporating weather and climate data
-- Integrating satellite imagery for damage assessment
-- Including socioeconomic and demographic indicators
-- Hyperparameter optimisation using Optuna
-- Continuous model retraining as new disaster data becomes available
-- Cloud deployment using Azure or AWS
-- Building an interactive dashboard for operational monitoring
+- Weather and climate data integration
+- Satellite imagery
+- Socioeconomic indicators
+- Hyperparameter optimisation
+- Cloud deployment (Azure or AWS)
+- Interactive dashboard
+- Automated model retraining
 
 ---
 
 # Key Skills Demonstrated
 
 - Data Cleaning
-- Exploratory Data Analysis (EDA)
+- Exploratory Data Analysis
 - Feature Engineering
 - Regression Modeling
-- Time-Aware Train-Test Splitting
+- Time-Aware Train-Test Split
 - Model Evaluation
-- Model Explainability with SHAP
-- Pipeline Development
+- Explainable AI (SHAP)
 - FastAPI Deployment
-- Git & GitHub Version Control
+- Git & GitHub
 
 ---
 
@@ -422,10 +397,10 @@ Possible enhancements include:
 
 Medical Doctor | Public Health Professional | Data Scientist
 
-Passionate about applying machine learning and analytics to support evidence-based decision-making in healthcare, disaster management, and public sector operations.
+Passionate about applying machine learning and analytics to support evidence-based decision-making in healthcare, disaster management and public sector operations.
 
 ---
 
 # Acknowledgements
 
-This project uses publicly available disaster data provided by the **Federal Emergency Management Agency (FEMA)**. The data was used solely for educational and portfolio purposes to demonstrate end-to-end data science and machine learning workflows.
+This project uses publicly available disaster data provided by the Federal Emergency Management Agency (FEMA). The data was used solely for educational and portfolio purposes.
